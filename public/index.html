@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1120">
+  <title>Legends Shootout</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+</head>
+<body>
+
+  <!-- FROSTED ICE BACKDROP (framed layouts) -->
+  <div class="lg-backdrop" aria-hidden="true">
+    <span class="lg-bd-rink"></span>
+    <span class="lg-bd-frost"></span>
+    <span class="lg-bd-snow"></span>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <button class="icon-btn" id="btnHome" title="New matchup" aria-label="New matchup">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <button class="icon-btn" id="btnHelp" title="Help" aria-label="Help">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="btnHistory" title="My bets" aria-label="My bets">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+      <button class="icon-btn" id="btnMaths" title="Pricing model" aria-label="Pricing model">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4H6l6 8-6 8h12"/></svg>
+      </button>
+    </div>
+    <div class="header-center">
+      <div class="lg-wordmark" aria-label="Legends Shootout">
+        <span class="lg-wm-top">LEGENDS</span>
+        <span class="lg-wm-bot">SHOOT<i class="lg-wm-puck"></i>UT</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn lg-sound-btn" id="btnSound" title="Sound" aria-label="Turn sound on" aria-pressed="false">
+        <svg class="lg-snd-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
+        <svg class="lg-snd-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+      </button>
+      <div class="balance-box">
+        <span class="balance-label">BALANCE</span>
+        <span class="balance-amount" id="balanceDisplay">$1,000.00</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content view-idle" id="mainContent">
+
+  <!-- AUTO PLAY STATUS -->
+  <div class="lg-auto-chip" id="autoChip" aria-live="polite">
+    <span class="lg-auto-dot"></span>
+    <span>Auto play · <b id="autoChipLeft">0</b> left</span>
+    <button type="button" id="autoChipStop">Stop</button>
+  </div>
+
+
+  <!-- STAGE COLUMN: viewer + face-off (left on desktop) -->
+  <div class="lg-col lg-col-stage" id="stageCol">
+
+    <!-- VIEWER (in-game on mobile; always visible on desktop) -->
+    <div class="lg-viewer-reveal" id="viewerReveal">
+      <div class="ingame-viewer-cell lg-viewer" id="ingameViewerCell">
+        <div class="ingame-video-wrap" id="ingameVideoWrap">
+          <canvas id="shotCanvas" class="ingame-video lg-canvas"></canvas>
+          <video id="shotVideo" class="ingame-video lg-video" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
+          <span class="lg-cutflash" aria-hidden="true"></span>
+          <span class="lg-netcam-tag" aria-hidden="true">Net cam</span>
+
+          <!-- FACE-OFF INTRO -->
+          <div class="lg-intro" id="intro" aria-hidden="true">
+            <span class="lg-intro-panel l"></span>
+            <span class="lg-intro-panel r"></span>
+            <span class="lg-intro-streaks"></span>
+            <div class="lg-intro-player l" id="introShooter"></div>
+            <div class="lg-intro-player r" id="introGoalie"></div>
+            <div class="lg-intro-names">
+              <span class="lg-intro-name l" id="introShooterName"></span>
+              <span class="lg-intro-name r" id="introGoalieName"></span>
+            </div>
+            <span class="lg-intro-vs">VS</span>
+            <span class="lg-intro-tag">Penalty shot</span>
+          </div>
+
+          <div class="lg-banner" id="shotBanner" aria-live="polite">
+            <div class="lg-banner-thumb" id="shotBannerThumb"></div>
+            <div class="lg-banner-text">
+              <span class="lg-banner-name" id="shotBannerName"></span>
+              <span class="lg-banner-head" id="shotBannerHead"></span>
+              <span class="lg-banner-detail" id="shotBannerDetail"></span>
+            </div>
+          </div>
+        </div>
+        <div class="ingame-viewer-chrome">
+          <div class="ingame-live-badge"><span class="ingame-live-dot"></span>LIVE</div>
+          <div class="ingame-minute" id="ingameRound">#0000000</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN-GAME MATCHBAR (mobile) -->
+    <div class="lg-matchbar" id="ingameMatchbar">
+      <div class="lg-mb-side" id="ingameShooterMini"></div>
+      <span class="lg-vs lg-vs-sm">VS</span>
+      <div class="lg-mb-side lg-mb-right" id="ingameGoalieMini"></div>
+    </div>
+
+    <!-- FACE-OFF -->
+    <section class="match-header lg-faceoff" id="matchHeader">
+      <div class="lg-arena" aria-hidden="true">
+        <span class="lg-spot lg-spot-l"></span>
+        <span class="lg-spot lg-spot-r"></span>
+        <span class="lg-floor"></span>
+        <span class="lg-haze"></span>
+      </div>
+
+      <div class="lg-faceoff-head">
+        <span class="lg-faceoff-kicker">Penalty shot</span>
+        <span class="lg-faceoff-title">Choose your matchup</span>
+      </div>
+
+      <div class="lg-sides">
+        <div class="lg-side" data-role="shooter">
+          <span class="lg-role">Shooter</span>
+          <button class="lg-stage" id="shooterStage" aria-label="Choose shooter"></button>
+          <div class="lg-name-row">
+            <button class="lg-arrow" data-role="shooter" data-dir="-1" aria-label="Previous shooter">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 6 9 12 15 18"/></svg>
+            </button>
+            <span class="lg-name" id="shooterName"></span>
+            <button class="lg-arrow" data-role="shooter" data-dir="1" aria-label="Next shooter">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18"/></svg>
+            </button>
+          </div>
+          <span class="lg-stat" id="shooterStat"></span>
+        </div>
+
+        <div class="lg-vs-col">
+          <span class="lg-vs">VS</span>
+          <button class="btn-randomize" id="btnRandomize" title="Random matchup" aria-label="Random matchup">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+        </div>
+
+        <div class="lg-side" data-role="goalie">
+          <span class="lg-role">Goalie</span>
+          <button class="lg-stage" id="goalieStage" aria-label="Choose goalie"></button>
+          <div class="lg-name-row">
+            <button class="lg-arrow" data-role="goalie" data-dir="-1" aria-label="Previous goalie">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 6 9 12 15 18"/></svg>
+            </button>
+            <span class="lg-name" id="goalieName"></span>
+            <button class="lg-arrow" data-role="goalie" data-dir="1" aria-label="Next goalie">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18"/></svg>
+            </button>
+          </div>
+          <span class="lg-stat" id="goalieStat"></span>
+        </div>
+      </div>
+
+      <!-- MATCH RESULT -->
+      <div class="lg-mr">
+        <button class="odd-btn lg-mr-btn" data-market="MR" data-selection="G">
+          <span class="odd-label" id="mrGoalLabel">Scores</span>
+          <span class="odd-value" data-odds="MR.G"></span>
+        </button>
+        <button class="odd-btn lg-mr-btn" data-market="MR" data-selection="NG">
+          <span class="odd-label" id="mrSaveLabel">Saves</span>
+          <span class="odd-value" data-odds="MR.NG"></span>
+        </button>
+      </div>
+    </section>
+
+
+    <!-- PLAYER SELECTOR -->
+    <div class="team-selector lg-selector" id="playerSelector" role="dialog" aria-label="Choose player">
+      <div class="team-selector-header">
+        <span class="team-selector-title" id="playerSelectorTitle">Choose shooter</span>
+        <button class="team-selector-close" id="playerSelectorClose" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="lg-selector-grid" id="playerSelectorGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- BETS COLUMN: markets / live bets / result + betslip (right on desktop) -->
+  <div class="lg-col lg-col-bets" id="betsCol">
+
+    <!-- MARKETS -->
+    <section class="markets-section">
+      <div class="lg-tabs" role="tablist">
+        <button class="lg-tab active" role="tab" data-tab="score" aria-selected="true">Score bets</button>
+        <button class="lg-tab" role="tab" data-tab="save" aria-selected="false">Save bets</button>
+      </div>
+
+      <div class="lg-panel active" data-panel="score">
+        <div class="market-section">
+          <div class="market-header">Score + Shot Type</div>
+          <div class="lg-grid-2">
+            <button class="odd-btn" data-market="SST" data-selection="F"><span class="odd-label">Forehand</span><span class="odd-value" data-odds="SST.F"></span></button>
+            <button class="odd-btn" data-market="SST" data-selection="B"><span class="odd-label">Backhand</span><span class="odd-value" data-odds="SST.B"></span></button>
+          </div>
+        </div>
+
+        <div class="market-section">
+          <div class="market-header">Score + Target Area</div>
+          <div class="lg-net" aria-label="Target area, shooter's view">
+            <div class="lg-net-mesh" aria-hidden="true"></div>
+            <button class="lg-zone" data-market="SSL" data-selection="TL" style="grid-area: tl"><span class="odd-label">Top Left</span><span class="odd-value" data-odds="SSL.TL"></span></button>
+            <button class="lg-zone" data-market="SSL" data-selection="TR" style="grid-area: tr"><span class="odd-label">Top Right</span><span class="odd-value" data-odds="SSL.TR"></span></button>
+            <button class="lg-zone" data-market="SSL" data-selection="BL" style="grid-area: bl"><span class="odd-label">Bottom Left</span><span class="odd-value" data-odds="SSL.BL"></span></button>
+            <button class="lg-zone lg-zone-fh" data-market="SSL" data-selection="FH" style="grid-area: fh"><span class="odd-label">Five Hole</span><span class="odd-value" data-odds="SSL.FH"></span></button>
+            <button class="lg-zone" data-market="SSL" data-selection="BR" style="grid-area: br"><span class="odd-label">Bottom Right</span><span class="odd-value" data-odds="SSL.BR"></span></button>
+          </div>
+          <p class="lg-note">Shooter's view of the net</p>
+        </div>
+
+        <div class="market-section">
+          <div class="market-header">Score + Shot Type + Target Area</div>
+          <div class="lg-combo" id="comboGrid"></div>
+        </div>
+      </div>
+
+      <div class="lg-panel" data-panel="save">
+        <div class="market-section">
+          <div class="market-header">Save + Save Type</div>
+          <div class="lg-grid-saves">
+            <button class="odd-btn" data-market="GST" data-selection="G"><span class="odd-label">Glove</span><span class="odd-value" data-odds="GST.G"></span></button>
+            <button class="odd-btn" data-market="GST" data-selection="B"><span class="odd-label">Blocker</span><span class="odd-value" data-odds="GST.B"></span></button>
+            <button class="odd-btn" data-market="GST" data-selection="P"><span class="odd-label">Pad</span><span class="odd-value" data-odds="GST.P"></span></button>
+            <button class="odd-btn" data-market="GST" data-selection="S"><span class="odd-label">Stick</span><span class="odd-value" data-odds="GST.S"></span></button>
+            <button class="odd-btn lg-wide" data-market="GST" data-selection="M"><span class="odd-label">Miss</span><span class="odd-value" data-odds="GST.M"></span></button>
+          </div>
+          <p class="lg-note">Pays only if no goal is scored. Miss means the shot goes wide or over.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- LIVE BETS (in-game) -->
+    <div class="lg-live-bets" id="liveBets">
+      <div class="ingame-markets" id="ingameMarkets"></div>
+      <div class="ingame-skip-wrap">
+        <button class="ingame-skip-btn" id="btnSkipIngame">
+          SKIP TO RESULTS
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULT VIEW -->
+    <div class="result-overlay" id="resultOverlay">
+      <canvas class="res-fx" id="resFx" aria-hidden="true"></canvas>
+      <div class="res-hero" id="resHero">
+        <div class="res-rays" id="resRays"></div>
+        <div class="res-hero-player" id="resHeroPlayer" aria-hidden="true"></div>
+        <div class="res-hero-inner">
+          <p class="res-eyebrow" id="resEyebrow">CONGRATULATIONS!</p>
+          <div class="res-headline" id="resHeadline">YOU WIN</div>
+          <div class="res-amount" id="resAmount"></div>
+        </div>
+      </div>
+      <div class="lg-res-bar" id="resOutcomeBar">
+        <div class="lg-res-side" id="resShooterThumb"></div>
+        <div class="lg-res-mid">
+          <span class="lg-res-who" id="resWho"></span>
+          <span class="lg-res-what" id="resWhat"></span>
+          <span class="lg-res-how" id="resHow"></span>
+        </div>
+        <div class="lg-res-side" id="resGoalieThumb"></div>
+      </div>
+      <div class="res-betslip" id="resBetslip"></div>
+      <div class="res-footer">
+        <button class="res-footer-btn" id="btnNext">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          NEW MATCHUP
+        </button>
+        <div class="res-footer-sep"></div>
+        <button class="res-footer-btn" id="btnRebet">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          RE-BET
+        </button>
+      </div>
+    </div>
+
+
+    <!-- BETSLIP -->
+    <div class="betslip" id="betslip">
+      <div class="betslip-summary" id="betslipSummary">
+        <div class="betslip-info">
+          <span>BETSLIP</span>
+          <span class="betslip-count" id="betCount">0 BETS</span>
+          <span class="betslip-stake" id="betTotalStake">$0 TOTAL STAKE</span>
+          <span class="betslip-maxpay">MAX PAY: <strong id="betMaxPay">$0</strong></span>
+        </div>
+        <button type="button" class="betslip-toggle" id="betslipToggle" aria-label="Expand betslip">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+      </div>
+      <div class="betslip-detail" id="betslipDetail">
+        <div class="betslip-bets" id="betslipBets"></div>
+      </div>
+      <div class="stake-panel" id="stakePanel">
+        <div class="stake-panel-header">
+          <span class="stake-panel-label">DEFAULT STAKE:</span>
+          <div class="stake-input-group">
+            <button class="stake-adjust" id="stakeMinus" aria-label="Lower stake">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="stake-input-value" id="stakeInputValue">$1</span>
+            <button class="stake-adjust" id="stakePlus" aria-label="Raise stake">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <button class="stake-panel-close" id="stakePanelClose" aria-label="Close stake">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="stake-presets">
+          <button class="stake-preset active" data-amount="1">$1</button>
+          <button class="stake-preset" data-amount="5">$5</button>
+          <button class="stake-preset" data-amount="10">$10</button>
+          <button class="stake-preset" data-amount="20">$20</button>
+          <button class="stake-preset" data-amount="50">$50</button>
+        </div>
+        <div class="stake-numpad">
+          <button class="numpad-key" data-key="1">1</button>
+          <button class="numpad-key" data-key="2">2</button>
+          <button class="numpad-key" data-key="3">3</button>
+          <button class="numpad-key" data-key="4">4</button>
+          <button class="numpad-key" data-key="5">5</button>
+          <button class="numpad-key" data-key="6">6</button>
+          <button class="numpad-key" data-key="7">7</button>
+          <button class="numpad-key" data-key="8">8</button>
+          <button class="numpad-key" data-key="9">9</button>
+          <button class="numpad-key" data-key=".">.</button>
+          <button class="numpad-key" data-key="0">0</button>
+          <button class="numpad-key numpad-wide" data-key="backspace" aria-label="Delete">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+          </button>
+          <button class="numpad-key numpad-wide numpad-confirm" data-key="confirm" aria-label="Confirm stake">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="betslip-actions">
+        <button class="btn-auto" id="btnAuto">AUTO</button>
+        <button class="btn-stake" id="btnStake">STAKE<span id="stakeDisplay">$1</span></button>
+        <button class="btn-play" id="btnPlay">PLAY <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- HELP -->
+  <div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-label="Help">
+    <div class="help-panel">
+      <div class="help-header">
+        <span class="help-title">HELP</span>
+        <span class="help-version">V0.2</span>
+        <button class="help-close" id="btnHelpClose" aria-label="Close help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="help-body">
+        <h2 class="help-section-title">GAME OBJECTIVE</h2>
+        <p class="help-text">Legends Shootout is an instant ice hockey penalty shot between an NHL Alumni shooter and goalie. Pick the matchup or tap the shuffle button, place your bets and press Play. The shot is decided the moment you play.</p>
+
+        <h3 class="help-sub-title">Playing the game</h3>
+        <ol class="help-list">
+          <li>Choose a shooter and a goalie, or shuffle for a random matchup.</li>
+          <li>Make your bet selections.</li>
+          <li>Press Play and watch the shot.</li>
+          <li>Pick a new matchup or re-bet the same one.</li>
+        </ol>
+
+        <h2 class="help-section-title">BET MARKETS</h2>
+        <ul class="help-list help-list--bullet">
+          <li><strong>Match Result</strong>: the shooter scores, or the goalie saves. A miss counts as a save.</li>
+          <li><strong>Score + Shot Type</strong>: a goal is scored with a forehand or a backhand.</li>
+          <li><strong>Score + Target Area</strong>: a goal is scored in the top left, top right, bottom left, bottom right or five hole. Areas are seen from the shooter's side.</li>
+          <li><strong>Score + Shot Type + Target Area</strong>: the shot type and target area of the goal are both correct.</li>
+          <li><strong>Save + Save Type</strong>: no goal is scored and the goalie stops it with the glove, blocker, pad or stick, or the shooter misses the net.</li>
+        </ul>
+        <p class="help-text">Score bets lose if no goal is scored. Save bets lose if a goal is scored.</p>
+
+        <h2 class="help-section-title">AUTO PLAY</h2>
+        <p class="help-text">Auto Play places bets and plays rounds for you until the number of rounds, the loss limit or the single win limit is reached.</p>
+
+        <h2 class="help-section-title">GENERAL INFORMATION</h2>
+        <ul class="help-list help-list--bullet">
+          <li>A random number generator decides every shot.</li>
+          <li>Malfunction voids all plays and pays.</li>
+          <li>Bets can't be cancelled once played.</li>
+          <li>Minimum bet, maximum bet and maximum payout are set by the operator.</li>
+          <li>Changing the matchup reprices any selections on the betslip.</li>
+        </ul>
+
+        <h2 class="help-section-title">RTP (RETURN TO PLAYER)</h2>
+        <p class="help-text"><strong>RTP: <span id="helpRtp">90%</span></strong> on every selection, before odds are rounded down to two decimals. RTP is a long-run average and is not guaranteed over a short run of play.</p>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+  <!-- PRICING MODEL -->
+  <div class="history-overlay lg-maths" id="mathsOverlay" role="dialog" aria-modal="true" aria-label="Pricing model" aria-hidden="true">
+    <div class="history-panel">
+      <div class="history-header">
+        <span class="history-title">PRICING MODEL</span>
+        <button class="history-close" id="btnMathsClose" aria-label="Close pricing model">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="history-body" id="mathsBody"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-overlay" id="historyOverlay" role="dialog" aria-modal="true" aria-label="My bets" aria-hidden="true">
+    <div class="history-panel">
+      <div class="history-header">
+        <span class="history-title">MY BETS</span>
+        <button class="history-close" id="btnHistoryClose" aria-label="Close my bets">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="history-body" id="historyBody"></div>
+    </div>
+  </div>
+
+  <!-- AUTO PLAY -->
+  <div class="autoplay-overlay" id="autoplayOverlay">
+    <div class="autoplay-panel">
+      <div class="autoplay-header">
+        <span class="autoplay-title">AUTO PLAY OPTIONS</span>
+        <button class="autoplay-close" id="autoplayClose" aria-label="Close Auto Play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="autoplay-stake">Stake: $ <strong id="autoplayStakeVal">1</strong> x</div>
+      <div class="autoplay-section">
+        <div class="autoplay-section-label">Number of Rounds</div>
+        <div class="autoplay-rounds">
+          <button class="autoplay-round-btn active" data-rounds="10">10</button>
+          <button class="autoplay-round-btn" data-rounds="25">25</button>
+          <button class="autoplay-round-btn" data-rounds="40">40</button>
+          <button class="autoplay-round-btn" data-rounds="50">50</button>
+        </div>
+        <div class="autoplay-risk">Total Risk: $<span id="autoplayTotalRisk">10</span></div>
+      </div>
+      <div class="autoplay-divider"></div>
+      <div class="autoplay-section">
+        <div class="autoplay-row">
+          <span class="autoplay-section-label">Loss Limit</span>
+          <div class="autoplay-limit-control">
+            <button class="autoplay-limit-btn" id="lossLimitMinus" aria-label="Lower loss limit">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <div class="autoplay-limit-input-wrap">
+              <span class="autoplay-limit-currency">$</span>
+              <input type="number" class="autoplay-limit-input" id="lossLimitInput" value="10" min="1" max="9999">
+            </div>
+            <button class="autoplay-limit-btn" id="lossLimitPlus" aria-label="Raise loss limit">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="autoplay-divider"></div>
+      <div class="autoplay-section">
+        <div class="autoplay-section-label">Single Win Limit</div>
+        <div class="autoplay-win-limit">
+          <button class="autoplay-win-btn" data-winlimit="10x" id="winLimit10x">10X STAKE</button>
+          <button class="autoplay-win-btn active" data-winlimit="none" id="winLimitNone">NO LIMIT</button>
+        </div>
+      </div>
+      <div class="autoplay-footer">
+        <label class="autoplay-skip">
+          <input type="checkbox" id="autoplaySkip">
+          <span class="autoplay-skip-toggle"></span>
+          <span>Skip To Results</span>
+        </label>
+        <button class="autoplay-activate" id="autoplayActivate">
+          ACTIVATE AUTO PLAY
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js?v=8"></script>
+  <script src="js/pricing.js?v=8"></script>
+  <script src="js/audio.js?v=8"></script>
+  <script src="js/scene.js?v=8"></script>
+  <script src="js/intro.js?v=8"></script>
+  <script src="js/clip.js?v=8"></script>
+  <script src="js/fx.js?v=8"></script>
+  <script src="js/game.js?v=8"></script>
+</body>
+</html>

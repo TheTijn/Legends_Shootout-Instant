@@ -1,0 +1,17 @@
+# source file | shooter file slug | clip goalie | cut (s, just before the deke/release; the puck never crosses the line)
+Borque (Home) - Joseph (Home).mp4|Ray_Bourque|Curtis_Joseph|5.80
+Clarke (Away) - Balfour (Home).mp4|Bobby_Clarke|Ed_Belfour|5.63
+Dionne (Home) - Balfour (Home).mp4|Marcel_Dionne|Ed_Belfour|5.33
+Francis (Home) - Hextall (Home).mp4|Ron_Francis|Ron_Hextall|5.60
+Hull (Home) -  Fuhr (Away).mp4|Brett_Hull|Grant_Fuhr|5.80
+Lindstrom (Home) - Hextall (Away).mp4|Nicklas_Lidstrom|Ron_Hextall|5.73
+Messier (Home) - Balfour (Away).mp4|Mark_Messier|Ed_Belfour|5.57
+Pronger (Home) - Hasek (Home).mp4|Chris_Pronger|Dominik_Hasek|5.77
+Recchi (Home) - Gigurre (Home).mp4|Mark_Recchi|Jean-Sebastien_Giguere|5.80
+Robitaille (Home) - Hasek ( Away).mp4|Luc_Robitaille|Dominik_Hasek|5.77
+Roenick (Home) - Hextall (Away).mp4|Jeremy_Roenick|Ron_Hextall|5.23
+Sakic (Home) - Giguere (Away).mp4|Joe_Sakic|Jean-Sebastien_Giguere|5.60
+Savard (Home)  - Fuhr (Home).mp4|Denis_Savard|Grant_Fuhr|5.40
+Selanne (Home) - Joseph (Away).mp4|Teemu_Selanne|Curtis_Joseph|5.33
+Sundin (Home) - Hasek (Away).mp4|Mats_Sundin|Dominik_Hasek|5.33
+Yzerman (Away) - Joseph (Home).mp4|Steve_Yzerman|Curtis_Joseph|5.13

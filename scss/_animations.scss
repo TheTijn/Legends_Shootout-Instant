@@ -1,0 +1,26 @@
+// ===== ANIMATIONS =====
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes teamSwap {
+  0% { opacity: 1; transform: scale(1); }
+  40% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.team-swapping .team-badge-wrapper {
+  animation: teamSwap 0.35s ease;
+}
+
+.simulating .btn-play {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+

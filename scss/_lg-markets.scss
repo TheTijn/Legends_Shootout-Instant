@@ -1,0 +1,229 @@
+// ===== PLAYER SELECTOR =====
+.lg-selector { top: 8px; }
+
+.lg-selector-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 6px 12px 14px;
+
+  &.goalies {
+    grid-template-columns: repeat(3, 1fr);
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+}
+
+.lg-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: $lg-copy;
+  animation: lgPickIn 0.35s $ease-out-expo both;
+  animation-delay: calc(var(--i, 0) * 22ms);
+
+  &:hover .lg-pick-card { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.22); }
+  &:active .lg-pick-card { transform: scale(0.96); }
+  &.active .lg-pick-card { border-color: $accent-light; box-shadow: 0 0 0 1px $accent-light, 0 0 16px rgba(128, 232, 223, 0.3); }
+  &.active .lg-pick-name { color: #fff; }
+}
+
+@keyframes lgPickIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+// Upper-body crop on a team-colour tile
+.lg-pick-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 100%, color-mix(in srgb, var(--accent) 75%, transparent) 0%, transparent 70%),
+    linear-gradient(180deg, $lg-panel-2 0%, color-mix(in srgb, var(--accent) 25%, #0a1120) 100%);
+  transition: transform 0.18s ease, border-color 0.18s, box-shadow 0.18s;
+
+  img {
+    position: absolute;
+    left: 50%;
+    top: 36%;
+    height: 250%;
+    width: auto;
+    max-width: none;
+    transform: translate(calc(var(--hx) * -1), calc(var(--hy) * -1));
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  }
+
+  .lg-avatar-initials {
+    font-size: 1.2rem;
+  }
+}
+.lg-pick-name { font-family: $font-cond; font-weight: 600; font-size: 0.72rem; line-height: 1.05; text-align: center; }
+.lg-pick-stat { font-family: $font-cond; font-size: 0.68rem; color: $accent; }
+
+// ===== TABS & MARKET PANELS =====
+.lg-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 7px;
+  padding: 3px;
+  gap: 3px;
+}
+.lg-tab {
+  position: relative;
+  z-index: 1;
+  @include condensed(0.86rem, 700, 0.6px);
+  text-transform: uppercase;
+  color: $accent;
+  padding: 8px 0;
+  border-radius: 5px;
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+
+  &.active { background: $lg-tab-active; color: #fff; box-shadow: inset 0 -2px 0 $accent-light; }
+
+  .lg-tab-count {
+    display: inline-block;
+    min-width: 16px;
+    margin-left: 5px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: $accent-light;
+    color: #0a1120;
+    font-size: 0.7rem;
+    line-height: 16px;
+    animation: lgCountPop 0.3s $ease-overshoot;
+  }
+}
+@keyframes lgCountPop {
+  from { transform: scale(0.4); }
+  to   { transform: scale(1); }
+}
+
+.lg-panel { display: none; flex-direction: column; gap: 14px; }
+.lg-panel.active { display: flex; animation: fadeIn 0.25s ease; }
+
+.lg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.lg-grid-saves {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  .lg-wide { grid-column: 1 / -1; }
+}
+.lg-note { font-size: 0.72rem; color: $lg-note; text-align: center; letter-spacing: 0.2px; }
+
+// Selection feedback shared by every odds button
+.odd-btn, .lg-zone {
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  &:active { transform: scale(0.97); }
+  &.selected { animation: lgSelect 0.32s $ease-overshoot; }
+}
+@keyframes lgSelect {
+  0%   { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+// The net (shooter's view)
+.lg-net {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 0.9fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas: "tl . tr" "bl fh br";
+  gap: 6px;
+  padding: 8px 8px 6px;
+  aspect-ratio: 16 / 8.2;
+  border: 5px solid $lg-red;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: radial-gradient(ellipse 80% 90% at 50% 100%, #15233d 0%, #0d1628 100%);
+  box-shadow:
+    0 3px 0 -1px rgba(200, 16, 46, 0.8),
+    inset 0 0 30px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+  // Ice lip under the crossbar line
+  &::after {
+    content: '';
+    position: absolute;
+    left: -14px;
+    right: -14px;
+    bottom: -4px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(200, 16, 46, 0.8) 12%, rgba(200, 16, 46, 0.8) 88%, transparent);
+  }
+}
+.lg-net-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 10px);
+}
+.lg-zone {
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+  min-height: 50px;
+
+  &:hover { background: rgba(255, 255, 255, 0.1); }
+  &.selected {
+    background: rgba(128, 232, 223, 0.16);
+    border-color: $accent-light;
+    box-shadow: 0 0 14px rgba(128, 232, 223, 0.25);
+    .odd-label { color: $accent-light; }
+  }
+}
+.lg-zone-fh { border-radius: 30px 30px 6px 6px; }
+
+// Shot type + target area grid
+.lg-combo {
+  display: grid;
+  grid-template-columns: 64px repeat(5, 1fr);
+  gap: 4px;
+  align-items: stretch;
+
+  .odd-btn { height: 42px; padding: 4px 2px; }
+  .odd-value { font-size: 0.9rem; }
+}
+.lg-combo-head {
+  font-family: $font-cond;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: $accent;
+  text-align: center;
+  line-height: 1.05;
+  align-self: end;
+  padding-bottom: 2px;
+}
+.lg-combo-row {
+  font-family: $font-cond;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: $lg-copy;
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+// Suspended prices
+.odd-btn.suspended, .lg-zone.suspended { opacity: 0.35; pointer-events: none; }

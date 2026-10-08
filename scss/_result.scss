@@ -1,0 +1,306 @@
+// ===== RESULT VIEW =====
+.result-overlay {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: $bg-primary;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
+.res-hero {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  width: 100%;
+  padding-bottom: 56.25%; // matches 16:9 video height
+  background: #060e1c;
+
+  &.win {
+    background: radial-gradient(ellipse at 50% 110%, rgba($win-green, 0.28) 0%, #060e1c 65%);
+
+    // Dark elliptical vignette between rays and text — boosts text contrast
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse 65% 50% at 50% 50%, rgba(0, 0, 0, 0.72) 0%, transparent 100%);
+    }
+  }
+}
+
+.res-rays {
+  position: absolute;
+  // Oversized so scaled rays bleed to frame edges; hero clips overflow
+  inset: -100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  transform-origin: 50% 48%; // anchors to hero text centre (50% of 3× container)
+  background: conic-gradient(
+    from 0deg at 50% 48%,
+    transparent        0deg,
+    rgba($win-green, 0.32)  5deg,
+    transparent       11deg,
+    transparent       20deg,
+    rgba($win-green, 0.22) 25deg,
+    transparent       31deg,
+    transparent       40deg,
+    rgba($win-green, 0.32) 45deg,
+    transparent       51deg,
+    transparent       60deg,
+    rgba($win-green, 0.22) 65deg,
+    transparent       71deg,
+    transparent       80deg,
+    rgba($win-green, 0.32) 85deg,
+    transparent       91deg,
+    transparent      100deg,
+    rgba($win-green, 0.22) 105deg,
+    transparent      111deg,
+    transparent      120deg,
+    rgba($win-green, 0.32) 125deg,
+    transparent      131deg,
+    transparent      140deg,
+    rgba($win-green, 0.22) 145deg,
+    transparent      151deg,
+    transparent      160deg,
+    rgba($win-green, 0.32) 165deg,
+    transparent      171deg,
+    transparent      180deg,
+    rgba($win-green, 0.22) 185deg,
+    transparent      191deg,
+    transparent      200deg,
+    rgba($win-green, 0.32) 205deg,
+    transparent      211deg,
+    transparent      220deg,
+    rgba($win-green, 0.22) 225deg,
+    transparent      231deg,
+    transparent      240deg,
+    rgba($win-green, 0.32) 245deg,
+    transparent      251deg,
+    transparent      260deg,
+    rgba($win-green, 0.22) 265deg,
+    transparent      271deg,
+    transparent      280deg,
+    rgba($win-green, 0.32) 285deg,
+    transparent      291deg,
+    transparent      300deg,
+    rgba($win-green, 0.22) 305deg,
+    transparent      311deg,
+    transparent      320deg,
+    rgba($win-green, 0.32) 325deg,
+    transparent      331deg,
+    transparent      340deg,
+    rgba($win-green, 0.22) 345deg,
+    transparent      351deg,
+    transparent      360deg
+  );
+  animation: raysRotate 18s linear infinite;
+
+  .win & { opacity: 1; }
+}
+
+@keyframes raysRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.res-hero-inner {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  padding: 0 20px;
+}
+
+.res-coins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+
+  .coin {
+    position: absolute;
+    font-size: var(--size, 1.3rem);
+    opacity: 0;
+    animation: coinBurst var(--dur, 1s) ease-out forwards;
+    animation-delay: var(--delay, 0s);
+  }
+}
+
+@keyframes coinBurst {
+  0%   { transform: translate(-50%, -50%) rotate(0deg) scale(0);   opacity: 0; }
+  8%   { transform: translate(-50%, -50%) rotate(calc(var(--rot, 360deg) * 0.05)) scale(1.6); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))) rotate(var(--rot, 360deg)) scale(0.1); opacity: 0; }
+}
+
+.res-eyebrow {
+  @include condensed(1rem, 600, 2.5px);
+  color: $accent-light;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+}
+
+.res-headline {
+  @include condensed(2.6rem, 800, 2px);
+  color: $text-white;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 1), 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+.res-amount {
+  @include condensed(4rem, 800, 1px);
+  color: $win-green;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+}
+
+// Bet slip
+.res-betslip {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.res-bet-card {
+  display: flex;
+  align-items: stretch;
+  background: $bg-panel;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  min-height: 68px;
+  position: relative;
+
+  &.win {
+    border-color: rgba($win-green, 0.55);
+    background: linear-gradient(105deg, rgba($win-green-dark, 0.22) 0%, rgba(5, 46, 22, 0.30) 100%);
+  }
+
+  &.igm-winning {
+    border-color: rgba(#0d9488, 0.6);
+    background: linear-gradient(105deg, rgba(#0d9488, 0.18) 0%, rgba(4, 40, 37, 0.28) 100%);
+    box-shadow: 0 0 12px rgba($win-green, 0.18);
+
+    .res-bet-placed-label { color: $win-green-light; }
+    .igm-live-score { color: $win-green-light; }
+  }
+
+  &.igm-losing { }
+}
+
+.res-bet-info {
+  flex: 1;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.res-bet-placed-label {
+  @include condensed(0.75rem, 500, 1.5px);
+  color: $text-dim;
+  text-transform: uppercase;
+}
+
+.res-bet-type {
+  @include condensed(0.82rem, 500, 0.3px);
+  color: $text-white;
+}
+
+.res-bet-stake {
+  @include condensed(0.75rem, 500, 0.3px);
+  color: $text-muted;
+  margin-top: 1px;
+}
+
+.res-bet-outcome {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 9px 12px;
+  gap: 4px;
+}
+
+.res-bet-odds {
+  @include condensed(1.05rem, 500, 0);
+  color: $text-white;
+}
+
+.res-bet-result {
+  @include condensed(0.75rem, 700, 0.3px);
+
+  &.won  { color: $win-green; }
+  &.lost { color: $text-muted; }
+}
+
+// Footer
+.res-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  padding: 12px 14px;
+  gap: 10px;
+  border-top: 1px solid $border-subtle;
+  background: $bg-primary;
+}
+
+.res-footer-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  background: $bg-panel;
+  border: 1px solid $border-light;
+  border-radius: $radius-sm;
+  color: $text-muted;
+  @include condensed(0.78rem, 700, 2px);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: $bg-btn-hover;
+    color: $text-white;
+    border-color: $border-hover;
+  }
+}
+
+.res-footer-sep {
+  width: 1px;
+  background: $border-subtle;
+  align-self: stretch;
+}
+

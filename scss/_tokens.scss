@@ -1,0 +1,59 @@
+// ===== VARIABLES =====
+$bg-primary: #0a1120;
+$bg-panel: #0d1528;
+$bg-stake: #1a2236;
+
+$accent: #809DBB;
+$accent-light: #80e8df;
+$accent-gold: #f5a623;
+$accent-gold-dark: #e8941e;
+$accent-red: #ff6b6b;
+$win-green: #22c55e;
+$win-green-dark: #16a34a;
+$win-green-light: #4ade80;
+
+$text-white: #ffffff;
+$text-muted: $accent;
+$text-dim: #6b8099;
+$text-faint: #506a85;
+$text-label: #bcc3cb;
+
+
+
+$border-subtle: rgba(255, 255, 255, 0.06);
+$border-light: rgba(255, 255, 255, 0.08);
+$border-hover: rgba(255, 255, 255, 0.12);
+
+$bg-btn: rgba(255, 255, 255, 0.04);
+$bg-btn-hover: rgba(255, 255, 255, 0.08);
+$bg-btn-active: rgba(255, 255, 255, 0.15);
+
+$font-primary: 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-condensed: 'Barlow Condensed', sans-serif;
+
+$max-width: 420px;
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 16px;
+
+$ease-bounce: cubic-bezier(0.32, 0.72, 0, 1);
+
+
+// ===== LEGENDS SHOOTOUT TOKENS =====
+$lg-red: #c8102e;
+$lg-red-hot: #ff3b3b;
+$lg-cream: #f3ead6;
+$lg-navy: #0b2d6b;
+$lg-ice: #a9c9df;
+$lg-save-blue: #5aa2ff;
+$lg-panel-2: #162035;
+$lg-tab-active: #1a2944;
+$lg-note: #5f7792;
+$lg-copy: #c3d2e2;
+
+$font-name: 'Montserrat', 'Barlow', sans-serif;
+$font-cond: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+
+$ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);

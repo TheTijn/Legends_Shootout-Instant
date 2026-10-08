@@ -1,0 +1,48 @@
+// ===== MIXINS =====
+@mixin condensed($size, $weight: 700, $spacing: 0.5px) {
+  font-family: $font-condensed;
+  font-size: $size;
+  font-weight: $weight;
+  letter-spacing: $spacing;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin label-style {
+  @include condensed(0.75rem, 600, 1.5px);
+  color: $text-label;
+  text-transform: uppercase;
+}
+
+@mixin card-bg {
+  background: $bg-btn;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+}
+
+@mixin card-hover {
+  background: $bg-btn-hover;
+  border-color: $border-hover;
+}
+
+@mixin selected-state {
+  background: rgba($accent, 0.15);
+  border-color: $accent-light;
+}
+
+@mixin overlay-base {
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+

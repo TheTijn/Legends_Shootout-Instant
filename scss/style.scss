@@ -1,0 +1,23 @@
+// ===== LEGENDS SHOOTOUT INSTANT =====
+// Shell partials (tokens -> overlays) are carried over from iHockey's
+// scss/style.scss; the _lg-* / _faceoff / _player partials are the Legends layer.
+@import 'tokens';
+@import 'mixins';
+@import 'base';
+@import 'match-header';
+@import 'markets';
+@import 'selector';
+@import 'betslip';
+@import 'autoplay';
+@import 'result';
+@import 'ingame';
+@import 'animations';
+@import 'overlays';
+
+@import 'player';
+@import 'faceoff';
+@import 'lg-markets';
+@import 'lg-ingame';
+@import 'lg-result';
+@import 'backdrop';
+@import 'layout';

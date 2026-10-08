@@ -1,0 +1,290 @@
+// Animatable so the versus panel can scale smoothly between states
+@property --stage-h {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 178px;
+}
+
+// ===== VIEW STATES & RESPONSIVE LAYOUT =====
+// <main> carries one of .view-idle / .view-ingame / .view-result (game.js setView).
+// Mobile (default) swaps whole screens inside the 420px column.
+// Desktop (>= $desk-bp): before Play the left column is all about the matchup
+// (big players, swapping); on Play the viewer slides open above and the
+// versus panel scales down below it. Markets / live bets / result and the
+// docked betslip sit on the right.
+
+$desk-bp: 1024px;
+$desk-max: 1360px;
+$desk-gutter: 24px;
+
+.lg-col { min-width: 0; }
+.lg-faceoff-head { display: none; }   // desktop only
+
+// ---------- mobile ----------
+@media (max-width: #{$desk-bp - 0.02px}) {
+  .main-content.view-idle {
+    .lg-viewer,
+    .lg-matchbar,
+    .lg-live-bets { display: none; }
+  }
+
+  .main-content.view-ingame,
+  .main-content.view-result {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
+
+    .lg-col-stage { flex-shrink: 0; }
+    .lg-col-bets {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .lg-faceoff,
+    .lg-selector,
+    .markets-section,
+    .betslip { display: none; }
+  }
+}
+
+.lg-live-bets {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// ---------- desktop ----------
+@media (min-width: $desk-bp) {
+  body { padding: $desk-gutter $desk-gutter 0; }
+
+  .header {
+    max-width: $desk-max;
+    padding: 8px 18px;
+    border-radius: 14px 14px 0 0;
+  }
+  .lg-wm-top { font-size: 0.7rem; }
+  .lg-wm-bot { font-size: 1.45rem; }
+
+  .main-content,
+  .main-content.view-ingame,
+  .main-content.view-result {
+    max-width: $desk-max;
+    height: calc(100dvh - #{$desk-gutter * 2} - 50px);
+    min-height: 660px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 392px);
+    overflow: hidden;
+    padding-bottom: 0;
+    border-radius: 0 0 14px 14px;
+
+    &.has-bets { padding-bottom: 0; }
+  }
+
+  // Left: viewer on top, face-off below
+  .lg-col-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    &::-webkit-scrollbar { display: none; }
+  }
+  // Viewer: collapsed while picking the matchup, slides open on Play.
+  // grid-template-rows 0fr -> 1fr animates to the viewer's natural 16:9 height.
+  .lg-viewer-reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    flex-shrink: 0;
+    transition: grid-template-rows 0.8s $ease-out-expo;
+  }
+  .main-content .lg-viewer {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+  .view-ingame,
+  .view-result {
+    .lg-viewer-reveal { grid-template-rows: 1fr; }
+    .lg-viewer { opacity: 1; }
+  }
+  // Full 16:9 viewer; on short screens it caps and crops (video + canvas cover)
+  .lg-viewer .ingame-video-wrap,
+  .lg-viewer .ingame-viewer-chrome {
+    aspect-ratio: 16 / 9;
+    height: auto;
+    max-height: calc(100dvh - #{$desk-gutter * 2} - 50px - 214px);
+  }
+  .main-content .lg-matchbar { display: none; }
+
+  // Versus panel. --stage-h drives every size in it, so the whole panel
+  // scales down smoothly as the viewer opens above it.
+  .main-content .lg-faceoff {
+    --stage-h: clamp(250px, calc(100dvh - 420px), 470px);
+    --vs-col: 300px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--vs-col) minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "t t t" "s v g" "s m g";
+    align-items: center;
+    align-content: center;
+    column-gap: 14px;
+    flex: 1;
+    min-height: 206px;
+    padding: 18px 26px 22px;
+    transition: --stage-h 0.8s $ease-out-expo, padding 0.8s $ease-out-expo;
+  }
+  .view-ingame .lg-faceoff,
+  .view-result .lg-faceoff {
+    --stage-h: 128px;
+    --vs-col: 250px;
+    padding: 8px 18px 10px;
+  }
+
+  .lg-faceoff-head {
+    grid-area: t;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-height: 70px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    transition: max-height 0.6s $ease-out-expo, opacity 0.35s ease, margin 0.6s $ease-out-expo;
+  }
+  .view-ingame .lg-faceoff-head,
+  .view-result .lg-faceoff-head { max-height: 0; opacity: 0; margin-bottom: 0; }
+  .lg-faceoff-kicker {
+    @include condensed(0.72rem, 800, 3px);
+    text-transform: uppercase;
+    color: #0a1120;
+    background: #fff;
+    padding: 1px 10px 0 13px;
+    transform: skewX(-10deg);
+  }
+  .lg-faceoff-title {
+    font-family: $font-cond;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 1.9rem;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.6);
+  }
+
+  .lg-sides { display: contents; }
+  .lg-side[data-role="shooter"] { grid-area: s; }
+  .lg-side[data-role="goalie"]  { grid-area: g; }
+  .lg-side { gap: 4px; align-self: center; }
+  .lg-stage { height: var(--stage-h); width: 100%; max-width: calc(var(--stage-h) * 1.45); }
+  .lg-player-num { font-size: calc(var(--stage-h) * 0.5); }
+  .lg-floor { display: none; }
+  // a lit spot of ice under each player
+  .lg-stage::before {
+    content: '';
+    position: absolute;
+    left: -14%;
+    right: -14%;
+    bottom: -6%;
+    height: 24%;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at center, rgba(226, 238, 248, 0.34) 0%, rgba(190, 214, 236, 0.14) 45%, transparent 70%),
+      radial-gradient(ellipse at center, color-mix(in srgb, var(--side-accent) 40%, transparent) 0%, transparent 72%);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+  }
+  .lg-role { font-size: calc(0.6rem + var(--stage-h) * 0.0009); }
+  .lg-name { font-size: calc(0.72rem + var(--stage-h) * 0.0012); max-width: none; }
+  .lg-stat { font-size: calc(0.74rem + var(--stage-h) * 0.0006); }
+  .lg-arrow { width: 36px; height: 40px; }
+  .lg-stage-chip { width: 28px; height: 28px; }
+
+  .lg-vs-col {
+    grid-area: v;
+    flex-direction: row;
+    justify-content: center;
+    align-self: end;
+    gap: 14px;
+    padding: 0 0 8px;
+  }
+  .lg-vs { font-size: calc(1.2rem + var(--stage-h) * 0.0022); }
+  .btn-randomize { width: 42px; height: 42px; }
+  .lg-mr { grid-area: m; align-self: start; margin-top: 6px; }
+  .lg-mr-btn { height: calc(48px + var(--stage-h) * 0.06); }
+  .lg-mr-btn .odd-value { font-size: calc(1.1rem + var(--stage-h) * 0.0012); }
+
+  // While a shot plays the matchup is locked
+  .view-ingame,
+  .view-result {
+    .lg-faceoff { pointer-events: none; }
+    .lg-arrow,
+    .btn-randomize,
+    .lg-stage-chip,
+    .lg-mr { opacity: 0.35; transition: opacity 0.3s; }
+  }
+
+  // Selector drops over the face-off area of the left column
+  .lg-selector { top: 8px !important; max-height: calc(100% - 16px); }
+  .lg-selector-grid { grid-template-columns: repeat(8, 1fr); }
+  .lg-selector-grid.goalies { grid-template-columns: repeat(6, 1fr); padding-left: 12px; padding-right: 12px; }
+
+  // Right: markets / live bets / result, betslip docked at the bottom
+  .lg-col-bets {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(128, 232, 223, 0.05), transparent 70%),
+      $bg-primary;
+  }
+  .markets-section {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 20px 18px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+  .view-idle .lg-live-bets { display: none; }
+  .view-ingame,
+  .view-result {
+    .markets-section,
+    .betslip { display: none; }
+  }
+
+  .result-overlay { border-left: 0; }
+  .res-hero .res-headline { font-size: 2.3rem; }
+
+  .betslip,
+  .betslip.visible {
+    position: relative;
+    left: auto;
+    bottom: auto !important;
+    width: 100%;
+    max-width: none;
+    transform: none;
+    opacity: 1;
+    pointer-events: all;
+    border-radius: 0 0 14px 0;
+    flex-shrink: 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  // Auto Play chip sits over the viewer
+  .lg-auto-chip { left: calc((100% - clamp(340px, 27vw, 392px)) / 2); }
+
+  // Overlays align with the wider frame
+  .help-panel,
+  .history-panel { max-width: 560px; }
+  .help-panel { margin-top: 90px; }
+  .history-overlay { padding-top: 90px; }
+}

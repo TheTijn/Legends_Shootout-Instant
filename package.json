@@ -1,0 +1,21 @@
+{
+  "name": "legends-shootout-instant",
+  "version": "0.1.0",
+  "description": "Legends Shootout - Instant NHL Alumni penalty shot betting game",
+  "main": "server.js",
+  "scripts": {
+    "sass": "sass --silence-deprecation=import scss/style.scss public/css/style.css",
+    "sass:watch": "sass --silence-deprecation=import --watch scss/style.scss public/css/style.css",
+    "images": "./scripts/optimize-images.sh",
+    "clips": "./scripts/encode-clips.sh",
+    "start": "npm run sass && node server.js",
+    "dev": "concurrently \"npm run sass:watch\" \"node --watch server.js\""
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "sass": "^1.99.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

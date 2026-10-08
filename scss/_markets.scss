@@ -1,0 +1,78 @@
+// ===== MARKETS =====
+.markets-section {
+  padding: 10px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.market-grid-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 5px;
+}
+
+.market-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &-header {
+    @include condensed(0.75rem, 700, 1.5px);
+    color: $text-label;
+    text-align: center;
+    text-transform: uppercase;
+    padding-bottom: 1px;
+  }
+}
+
+.market-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.market-header {
+  @include condensed(0.75rem, 700, 1.5px);
+  color: $text-label;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+// Odds buttons
+.odd-btn {
+  display: flex;
+  flex-direction: column;
+  @include flex-center;
+  gap: 0px;
+  padding: 6px;
+  height: 52px;
+  @include card-bg;
+  color: $text-white;
+  transition: all 0.15s ease;
+
+  &:hover { @include card-hover; }
+
+  &.selected {
+    @include selected-state;
+
+    .odd-label { color: $accent-light; }
+  }
+}
+
+.odd-label {
+  @include condensed(0.75rem, 600, 0.5px);
+  color: $text-muted;
+  text-transform: uppercase;
+}
+
+.odd-value {
+  @include condensed(1.05rem, 500, 0.5px);
+  color: $text-white;
+}
+
+.odd-ref {
+  color: $accent-light;
+}
+

@@ -1,0 +1,140 @@
+// ===== FROSTED ICE BACKDROP =====
+// Fixed layer behind the app (visible once the app is framed, >= 480px):
+// cold rink light, frost grain, skate scratches, faint rink markings,
+// drifting ice sparkle and a glassy frame around the game.
+
+$frost-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1.6 0 0 0 -.78'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+$frost-bloom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='5' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 2.2 0 0 0 -1.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+
+.lg-backdrop { display: none; }
+
+@media (min-width: 480px) {
+  // The fixed backdrop sits at z-index -1, so body must not paint over it
+  html { background: #9fc2da; }
+  body { background: transparent; }
+
+  .lg-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% -8%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
+      radial-gradient(ellipse 120% 80% at 50% 120%, rgba(10, 30, 60, 0.55) 0%, rgba(10, 30, 60, 0) 60%),
+      linear-gradient(180deg, #eef7fc 0%, #cfe4f1 28%, #a6c6dc 58%, #6f93b2 100%);
+  }
+
+  // Rink markings frozen under the surface
+  .lg-bd-rink {
+    position: absolute;
+    inset: -5%;
+    opacity: 0.55;
+    filter: blur(1.2px);
+    background:
+      // centre red line
+      linear-gradient(90deg, transparent calc(50% - 7px), rgba(200, 16, 46, 0.32) calc(50% - 7px), rgba(200, 16, 46, 0.32) calc(50% + 7px), transparent calc(50% + 7px)),
+      // blue lines
+      linear-gradient(90deg, transparent calc(16% - 9px), rgba(29, 79, 179, 0.28) calc(16% - 9px), rgba(29, 79, 179, 0.28) calc(16% + 9px), transparent calc(16% + 9px)),
+      linear-gradient(90deg, transparent calc(84% - 9px), rgba(29, 79, 179, 0.28) calc(84% - 9px), rgba(29, 79, 179, 0.28) calc(84% + 9px), transparent calc(84% + 9px)),
+      // centre circle + faceoff spots
+      radial-gradient(circle at 50% 50%, transparent 0 220px, rgba(29, 79, 179, 0.3) 221px 226px, transparent 227px),
+      radial-gradient(circle at 50% 50%, rgba(29, 79, 179, 0.35) 0 14px, transparent 15px),
+      radial-gradient(circle at 6% 30%, transparent 0 170px, rgba(200, 16, 46, 0.26) 171px 175px, transparent 176px),
+      radial-gradient(circle at 94% 30%, transparent 0 170px, rgba(200, 16, 46, 0.26) 171px 175px, transparent 176px),
+      radial-gradient(circle at 6% 78%, transparent 0 170px, rgba(200, 16, 46, 0.26) 171px 175px, transparent 176px),
+      radial-gradient(circle at 94% 78%, transparent 0 170px, rgba(200, 16, 46, 0.26) 171px 175px, transparent 176px);
+  }
+
+  // Frost: large crystalline blooms + fine grain + skate scratches
+  .lg-bd-frost {
+    position: absolute;
+    inset: 0;
+    background:
+      $frost-bloom center / 900px 900px,
+      $frost-grain 0 0 / 260px 260px,
+      repeating-linear-gradient(17deg, transparent 0 46px, rgba(255, 255, 255, 0.18) 46px 47px, transparent 47px 131px),
+      repeating-linear-gradient(-28deg, transparent 0 71px, rgba(255, 255, 255, 0.14) 71px 72px, transparent 72px 197px),
+      repeating-linear-gradient(64deg, transparent 0 113px, rgba(120, 160, 195, 0.16) 113px 114px, transparent 114px 260px);
+    opacity: 0.9;
+    mix-blend-mode: screen;
+
+    // frosted corners
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 38% 45% at 0% 0%, rgba(255, 255, 255, 0.85), transparent 70%),
+        radial-gradient(ellipse 38% 45% at 100% 0%, rgba(255, 255, 255, 0.8), transparent 70%),
+        radial-gradient(ellipse 30% 40% at 0% 100%, rgba(235, 245, 252, 0.45), transparent 70%),
+        radial-gradient(ellipse 30% 40% at 100% 100%, rgba(235, 245, 252, 0.45), transparent 70%);
+      mask-image: $frost-bloom;
+      -webkit-mask-image: $frost-bloom;
+      mask-size: 520px 520px;
+      -webkit-mask-size: 520px 520px;
+    }
+  }
+
+  // Arena light shafts + drifting ice sparkle
+  .lg-bd-snow {
+    position: absolute;
+    inset: -60px 0 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.95) 0 1.4px, transparent 2.2px) 0 0 / 180px 210px,
+      radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.8px) 0 0 / 130px 160px,
+      radial-gradient(circle at 40% 80%, rgba(220, 245, 255, 0.9) 0 1.8px, transparent 2.8px) 0 0 / 260px 300px;
+    opacity: 0.7;
+    animation: lgSnow 28s linear infinite;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 34vw;
+      height: 120vh;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 75%);
+      filter: blur(30px);
+      opacity: 0.45;
+    }
+    &::before { left: 6vw; transform: rotate(14deg); transform-origin: 50% 0; }
+    &::after { right: 6vw; transform: rotate(-14deg); transform-origin: 50% 0; }
+  }
+
+  @keyframes lgSnow {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to   { background-position: 60px 420px, -40px 320px, 30px 600px; }
+  }
+
+  // Glassy, board-like frame around the game
+  .header,
+  .main-content {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.55),
+      0 24px 60px rgba(8, 24, 48, 0.45),
+      0 0 50px rgba(128, 232, 223, 0.18);
+  }
+  .header {
+    background: linear-gradient(180deg, #13213b 0%, $bg-panel 100%);
+    border-bottom: 0;
+
+    // dasher-board kick stripe under the header
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -3px;
+      height: 3px;
+      z-index: 2;
+      background: linear-gradient(90deg, $lg-red 0 33%, #ffffff 33% 67%, #1d4fb3 67% 100%);
+      opacity: 0.9;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-bd-snow { animation: none; }
+}

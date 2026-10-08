@@ -1,0 +1,329 @@
+// ===== HEADER: WORDMARK & SOUND =====
+.lg-wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: $font-cond;
+  font-weight: 800;
+  color: #fff;
+  line-height: 0.86;
+  user-select: none;
+}
+.lg-wm-top {
+  font-size: 0.62rem;
+  letter-spacing: 4.2px;
+  margin-right: -4.2px;
+  color: $lg-ice;
+}
+.lg-wm-bot {
+  font-size: 1.22rem;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(180deg, #fff 30%, #c9dcec 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(200, 16, 46, 0.9));
+}
+.lg-wm-puck {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin: 0 0.05em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0 18%, #dfe9f2 60%, #a9c3d8 100%);
+  box-shadow: 0 0 0 1.5px $lg-red;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.lg-sound-btn {
+  .lg-snd-on { display: none; }
+  &[aria-pressed="true"] {
+    color: $accent-light;
+    .lg-snd-on { display: block; }
+    .lg-snd-off { display: none; }
+  }
+}
+
+// ===== FACE-OFF =====
+.lg-faceoff {
+  padding: 10px 12px 12px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 70% 60% at 14% 26%, color-mix(in srgb, var(--shooter-accent, #{$lg-red}) 34%, transparent), transparent 70%),
+    radial-gradient(ellipse 70% 60% at 86% 26%, color-mix(in srgb, var(--goalie-accent, #{$lg-navy}) 38%, transparent), transparent 70%),
+    linear-gradient(180deg, #091224 0%, #12213c 46%, #0a1120 100%);
+  transition: background 0.5s ease;
+}
+
+// Arena dressing behind the players
+.lg-arena {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.lg-spot {
+  position: absolute;
+  top: -30px;
+  width: 46%;
+  height: 260px;
+  background: linear-gradient(180deg, rgba(220, 235, 255, 0.16) 0%, rgba(220, 235, 255, 0.04) 60%, transparent 100%);
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+  filter: blur(3px);
+  mix-blend-mode: screen;
+  animation: lgSpot 7s ease-in-out infinite alternate;
+
+  &-l { left: 2%; transform-origin: 50% 0; transform: rotate(-9deg); }
+  &-r { right: 2%; transform-origin: 50% 0; transform: rotate(9deg); animation-delay: -3.5s; }
+}
+
+@keyframes lgSpot {
+  0%   { opacity: 0.65; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.75; }
+}
+
+// Perspective sheet of ice the players stand on
+.lg-floor {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 140px;
+  height: 190px;
+  transform: perspective(260px) rotateX(58deg);
+  transform-origin: 50% 0;
+  background:
+    radial-gradient(circle at 50% 36.5%, rgba(200, 16, 46, 0.6) 0 1.4%, transparent 1.6%),
+    linear-gradient(180deg, transparent 34%, rgba(29, 79, 179, 0.5) 34%, rgba(29, 79, 179, 0.5) 39%, transparent 39%),
+    radial-gradient(ellipse 55% 70% at 50% 30%, rgba(225, 238, 248, 0.42) 0%, rgba(190, 215, 235, 0.16) 50%, transparent 78%);
+  mask-image: radial-gradient(ellipse 60% 85% at 50% 30%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 85% at 50% 30%, #000 30%, transparent 75%);
+}
+
+.lg-haze {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% 110%, rgba(10, 17, 32, 0.95) 20%, transparent 60%),
+    radial-gradient(ellipse 100% 60% at 50% -20%, rgba(255, 255, 255, 0.06), transparent 60%);
+}
+
+.lg-sides {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 44px 1fr;
+  align-items: start;
+  gap: 2px;
+}
+
+.lg-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  --accent: var(--side-accent);
+
+  &[data-role="shooter"] { --side-accent: var(--shooter-accent, #{$lg-red}); }
+  &[data-role="goalie"]  { --side-accent: var(--goalie-accent, #{$lg-navy}); }
+}
+
+.lg-role {
+  @include condensed(0.68rem, 800, 1.6px);
+  text-transform: uppercase;
+  color: #0a1120;
+  background: #fff;
+  padding: 1px 8px;
+  border-radius: 2px;
+  transform: skewX(-10deg);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--side-accent) 80%, #000);
+}
+
+// The tappable stage holding the cut-out
+.lg-stage {
+  position: relative;
+  width: 100%;
+  height: 178px;
+  padding: 0;
+  border-radius: 10px;
+  transition: transform 0.25s $ease-bounce;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover { transform: translateY(-2px); }
+  &:active { transform: scale(0.97); }
+  &:focus-visible { outline-offset: -2px; }
+
+  .lg-player img {
+    animation: lgIdle 3.4s ease-in-out infinite alternate;
+    transform-origin: 50% 100%;
+  }
+
+  &.enter .lg-player img { animation: lgEnter 0.5s $ease-out-expo both; }
+  &.enter .lg-player-num { animation: lgNumIn 0.6s ease-out both; }
+  &.enter .lg-player-glow { animation: lgGlowIn 0.6s ease-out both; }
+}
+.lg-side[data-role="goalie"] .lg-stage {
+  .lg-player img { animation-delay: -1.7s; }
+  &.enter .lg-player img { animation-name: lgEnterR; }
+}
+
+// "Change" chip
+.lg-stage-chip {
+  position: absolute;
+  bottom: 6px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  @include flex-center;
+  background: rgba(10, 17, 32, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(4px);
+  transition: color 0.2s, border-color 0.2s, transform 0.2s;
+
+  [data-role="shooter"] & { left: 4px; }
+  [data-role="goalie"] & { right: 4px; }
+}
+.lg-stage:hover .lg-stage-chip {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+@keyframes lgIdle {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-2px) scale(1.012, 1.008); }
+}
+@keyframes lgEnter {
+  0%   { opacity: 0; transform: translateX(-34px) scale(0.94); filter: brightness(2.2) blur(3px); }
+  60%  { opacity: 1; filter: brightness(1.15) blur(0); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes lgEnterR {
+  0%   { opacity: 0; transform: translateX(34px) scale(0.94); filter: brightness(2.2) blur(3px); }
+  60%  { opacity: 1; filter: brightness(1.15) blur(0); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes lgNumIn {
+  from { opacity: 0; letter-spacing: 12px; }
+  to   { opacity: 0.32; }
+}
+@keyframes lgGlowIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  to   { opacity: 0.85; transform: translateX(-50%) scale(1); }
+}
+
+.lg-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 2px;
+}
+.lg-arrow {
+  color: rgba(255, 255, 255, 0.45);
+  width: 28px;
+  height: 36px;
+  flex-shrink: 0;
+  @include flex-center;
+  border-radius: $radius-sm;
+  transition: color 0.2s, transform 0.15s;
+
+  &:hover { color: #fff; }
+  &:active { transform: scale(0.85); }
+}
+.lg-name {
+  font-family: $font-name;
+  font-weight: 800;
+  font-size: 0.74rem;
+  line-height: 1.12;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 0.2px;
+  min-height: 2.24em;
+  @include flex-center;
+  flex: 1;
+  min-width: 0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+.lg-stat {
+  font-family: $font-cond;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: $accent;
+  letter-spacing: 0.3px;
+
+  strong { color: #fff; font-weight: 700; }
+}
+
+.lg-vs-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-top: 92px;
+  position: relative;
+  z-index: 1;
+}
+.lg-vs {
+  display: inline-block;
+  font-family: $font-cond;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 1.55rem;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(135deg, #e3173a 0%, $lg-red 60%, #8e0a20 100%);
+  padding: 4px 9px 3px 7px;
+  transform: skewX(-10deg);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4), 0 0 18px rgba(200, 16, 46, 0.45);
+  animation: lgVsPulse 2.8s ease-in-out infinite;
+}
+.lg-vs-sm {
+  font-size: 1rem;
+  padding: 2px 6px 1px 5px;
+  animation: none;
+}
+@keyframes lgVsPulse {
+  0%, 100% { box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4), 0 0 14px rgba(200, 16, 46, 0.35); }
+  50%      { box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4), 0 0 26px rgba(255, 59, 59, 0.65); }
+}
+
+// Match result
+.lg-mr {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 12px;
+}
+.lg-mr-btn {
+  height: 58px;
+  background: rgba(13, 21, 40, 0.72);
+  backdrop-filter: blur(6px);
+
+  .odd-label { font-size: 0.8rem; color: $lg-copy; }
+  .odd-value { font-size: 1.3rem; font-weight: 700; }
+
+  &[data-selection="G"]  { border-left: 3px solid var(--shooter-accent, #{$lg-red}); }
+  &[data-selection="NG"] { border-right: 3px solid var(--goalie-accent, #3d7bd8); }
+}
+
+// Odds flash when a matchup reprices
+.odd-value.flash { animation: lgOddsFlash 0.6s ease; }
+@keyframes lgOddsFlash {
+  0%   { color: $accent-light; transform: translateY(-2px); }
+  100% { color: inherit; transform: none; }
+}

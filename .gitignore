@@ -1,0 +1,13 @@
+node_modules/
+public/css/style.css.map
+.DS_Store
+
+# Raw source media stays local (optimised versions live in public/assets/).
+# scripts/optimize-images.sh and scripts/encode-clips.sh rebuild from these.
+Players_Series_01/
+Players_Series_01_Flipped/
+Video clips/
+Legends_Shootout_Instant_Prototype*.html
+
+# Local Claude Code settings (launch.json is shared)
+.claude/settings.local.json
