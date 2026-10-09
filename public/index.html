@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a1120">
   <title>Legends Shootout</title>
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -73,12 +73,6 @@
         <div class="ingame-video-wrap" id="ingameVideoWrap">
           <video id="shotVideo" class="ingame-video lg-video" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
           <span class="lg-cutflash" aria-hidden="true"></span>
-          <span class="lg-goal-light" aria-hidden="true"></span>
-          <div class="lg-reveal" aria-hidden="true">
-            <span class="lg-reveal-word" id="shotRevealWord"></span>
-            <span class="lg-reveal-detail" id="shotRevealDetail"></span>
-          </div>
-
           <!-- FACE-OFF INTRO -->
           <div class="lg-intro" id="intro" aria-hidden="true">
             <span class="lg-intro-panel l"></span>
@@ -94,14 +88,8 @@
             <span class="lg-intro-tag">Penalty shot</span>
           </div>
 
-          <div class="lg-banner" id="shotBanner" aria-live="polite">
-            <div class="lg-banner-thumb" id="shotBannerThumb"></div>
-            <div class="lg-banner-text">
-              <span class="lg-banner-name" id="shotBannerName"></span>
-              <span class="lg-banner-head" id="shotBannerHead"></span>
-              <span class="lg-banner-detail" id="shotBannerDetail"></span>
-            </div>
-          </div>
+          <!-- OUTCOME CARD (built by outcome.js when the clip ends) -->
+          <div class="lg-outcome" id="shotOutcome" role="status"></div>
         </div>
         <div class="ingame-viewer-chrome">
           <div class="ingame-live-badge"><span class="ingame-live-dot"></span>LIVE</div>
@@ -504,12 +492,13 @@
     </div>
   </div>
 
-  <script src="js/data.js?v=10"></script>
-  <script src="js/pricing.js?v=10"></script>
-  <script src="js/audio.js?v=10"></script>
-  <script src="js/intro.js?v=10"></script>
-  <script src="js/clip.js?v=10"></script>
-  <script src="js/fx.js?v=10"></script>
-  <script src="js/game.js?v=10"></script>
+  <script src="js/data.js?v=12"></script>
+  <script src="js/pricing.js?v=11"></script>
+  <script src="js/audio.js?v=12"></script>
+  <script src="js/intro.js?v=11"></script>
+  <script src="js/outcome.js?v=4"></script>
+  <script src="js/clip.js?v=13"></script>
+  <script src="js/fx.js?v=11"></script>
+  <script src="js/game.js?v=14"></script>
 </body>
 </html>

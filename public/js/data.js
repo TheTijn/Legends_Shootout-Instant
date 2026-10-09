@@ -74,3 +74,8 @@ const SELECTIONS = {
 function artSrc(p, hi = false) {
   return `${ART_PATH}${p.art}/${p.file}${hi ? '@2x' : ''}.webp`;
 }
+
+// Trading card (cards/<file>.webp, 480px tall, @2x 960px), shown on the outcome card
+function cardSrc(p, hi = false) {
+  return `${ART_PATH}cards/${p.file}${hi ? '@2x' : ''}.webp`;
+}

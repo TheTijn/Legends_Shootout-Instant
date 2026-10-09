@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Regenerates public/assets/players/{series01,flipped}/<Slug>.webp (200px tall)
-# and <Slug>@2x.webp (400px tall) from the source art folders.
+# and <Slug>@2x.webp (400px tall) from the source art folders, and the trading
+# cards shown on the outcome card, public/assets/players/cards/<Slug>.webp
+# (480px tall) and @2x (960px tall), from PLAYERS_CARDS/ ("First Last.jpg").
 # Requires ImageMagick (magick) and cwebp.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -35,5 +37,22 @@ process() {
   done
 }
 
-process Players_Series_01 series01
-process Players_Series_01_Flipped flipped
+# Trading cards: opaque JPEG sources, the file name is the player's name
+cards() {
+  mkdir -p "$OUT/cards"
+  for f in PLAYERS_CARDS/*.jpg; do
+    local name; name=$(basename "$f" .jpg)
+    [ "$name" = CARDS ] && continue   # the contact sheet of all cards
+    name=${name// /_}
+    for spec in "480:" "960:@2x"; do
+      local h="${spec%%:*}" suffix="${spec#*:}"
+      magick "$f" -filter Lanczos -resize "x$h" -strip "$TMP/$name-card-$h.png"
+      cwebp -quiet -q 80 -m 6 -sharp_yuv "$TMP/$name-card-$h.png" -o "$OUT/cards/$name$suffix.webp"
+    done
+    echo "cards/$name"
+  done
+}
+
+# `optimize-images.sh cards` rebuilds the cards only
+[ "${1:-}" = cards ] || { process Players_Series_01 series01; process Players_Series_01_Flipped flipped; }
+cards

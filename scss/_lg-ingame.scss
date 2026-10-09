@@ -1,75 +1,5 @@
 // ===== IN-GAME: SHOT VIEWER =====
 
-// Outcome banner (lower third)
-.lg-banner {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 4;
-  display: flex;
-  align-items: flex-end;
-  opacity: 0;
-  transform: translateX(-18px);
-  transition: opacity 0.25s ease, transform 0.45s $ease-out-expo;
-  pointer-events: none;
-
-  &.show { opacity: 1; transform: none; }
-  &.show .lg-banner-head { animation: lgBannerHead 0.5s $ease-out-expo both 0.05s; }
-  &.show .lg-banner-detail { animation: lgBannerHead 0.5s $ease-out-expo both 0.14s; }
-  &.show .lg-banner-thumb { animation: lgThumbPop 0.45s $ease-overshoot both; }
-}
-@keyframes lgBannerHead {
-  from { clip-path: inset(0 100% 0 0); }
-  to   { clip-path: inset(0 0 0 0); }
-}
-@keyframes lgThumbPop {
-  from { transform: scale(0.4) rotate(-12deg); opacity: 0; }
-  to   { transform: none; opacity: 1; }
-}
-.lg-banner-thumb {
-  flex-shrink: 0;
-  z-index: 1;
-  margin-right: -10px;
-  margin-bottom: -2px;
-
-  .lg-mini-fig { width: 62px; height: 70px; }
-  .lg-mini-glow { width: 64px; height: 64px; }
-}
-.lg-banner-text { display: flex; flex-direction: column; align-items: flex-start; }
-.lg-banner-name {
-  font-family: $font-name;
-  font-weight: 800;
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  background: #0a1120;
-  color: #fff;
-  padding: 2px 8px 2px 12px;
-}
-.lg-banner-head {
-  font-family: $font-cond;
-  font-style: italic;
-  font-weight: 900;
-  font-size: 1.8rem;
-  line-height: 1;
-  color: #fff;
-  padding: 2px 14px 1px 12px;
-  text-transform: uppercase;
-  background: linear-gradient(100deg, $lg-red 0%, #ff6a2b 100%);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
-}
-.lg-banner.save .lg-banner-head { background: linear-gradient(100deg, #1d4fb3 0%, #3b8de0 100%); }
-.lg-banner-detail {
-  font-family: $font-cond;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 0.74rem;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  background: $lg-navy;
-  color: #fff;
-  padding: 2px 10px 2px 12px;
-}
-
 // Matchbar below the scene
 .lg-matchbar {
   display: flex;
@@ -311,8 +241,8 @@
 
 // ===== SHOT CLIP + FREEZE-FRAME REVEAL =====
 // The shooter's clip plays to its cut point (just before the puck reaches the
-// net). Then the frame freezes (.frozen), the arena flashes and the drawn
-// outcome is stamped over it (.revealed; .goal-lit for goals).
+// net). Then the frame freezes (.frozen) with a flash and the outcome card
+// (_lg-outcome.scss) sweeps over it.
 .lg-video {
   z-index: 1;
   background: #05080f;
@@ -341,85 +271,7 @@
   100% { opacity: 0; }
 }
 
-// Goal light: red sweep from the top of the glass + pulsing tint
-.lg-goal-light {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  opacity: 0;
-  background:
-    radial-gradient(ellipse 60% 55% at 50% -10%, rgba(255, 40, 50, 0.75), rgba(255, 30, 40, 0.18) 55%, transparent 75%),
-    rgba(255, 20, 30, 0.12);
-  mix-blend-mode: screen;
-
-  .goal-lit & { animation: lgGoalLight 0.5s ease-in-out infinite alternate; }
-}
-@keyframes lgGoalLight {
-  from { opacity: 0.45; }
-  to   { opacity: 1; }
-}
-
-// Outcome stamp over the frozen frame
-.lg-reveal {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(ellipse 55% 45% at 50% 48%, rgba(5, 10, 20, 0.5), transparent 75%);
-
-  .revealed & { opacity: 1; }
-}
-.lg-reveal-word {
-  font-family: $font-cond;
-  font-style: italic;
-  font-weight: 900;
-  font-size: clamp(2.6rem, 9vw, 5rem);
-  line-height: 1;
-  text-transform: uppercase;
-  color: #fff;
-  padding: 2px 22px 0 16px;
-  background: linear-gradient(135deg, #ff3b3b 0%, $lg-red 55%, #8e0a20 100%);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45), 0 0 50px rgba(255, 59, 59, 0.55);
-  transform: skewX(-10deg) scale(2.4);
-  opacity: 0;
-
-  .reveal-save & {
-    background: linear-gradient(135deg, #4aa3ff 0%, #1d4fb3 60%, #0e2c6e 100%);
-    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45), 0 0 50px rgba(90, 162, 255, 0.5);
-  }
-  .revealed & { animation: lgStamp 0.45s $ease-overshoot forwards; }
-}
-.lg-reveal-detail {
-  @include condensed(clamp(0.8rem, 2.2vw, 1.05rem), 800, 2px);
-  text-transform: uppercase;
-  color: #fff;
-  background: rgba(5, 10, 20, 0.85);
-  padding: 3px 12px 2px 14px;
-  transform: skewX(-10deg) translateY(8px);
-  opacity: 0;
-
-  .revealed & { animation: lgStampDetail 0.4s $ease-out-expo forwards 0.22s; }
-}
-@keyframes lgStamp {
-  0%   { opacity: 0; transform: skewX(-10deg) scale(2.4); }
-  60%  { opacity: 1; }
-  100% { opacity: 1; transform: skewX(-10deg) scale(1); }
-}
-@keyframes lgStampDetail {
-  to { opacity: 1; transform: skewX(-10deg) translateY(0); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .lg-video { transition: none; }
   .frozen .lg-video { transform: none; }
-  .goal-lit .lg-goal-light { animation: none; opacity: 0.7; }
-  .revealed .lg-reveal-word,
-  .revealed .lg-reveal-detail { animation-duration: 0.01s; animation-delay: 0s; }
 }

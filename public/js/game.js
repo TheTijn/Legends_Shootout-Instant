@@ -160,12 +160,12 @@ function shimmerBets() {
 function resetViews() {
   setView('idle');
   $('#resultOverlay').classList.remove('visible');
-  $('#shotBanner').classList.remove('show', 'save');
   Intro.reset();
   ShotClip.stop();
-  clearTimeout(clipCueTimer);
   clearTimeout(revealTimer);
-  $('#ingameVideoWrap').classList.remove('frozen', 'goal-lit', 'revealed', 'reveal-save');
+  clearTimeout(outcomeSoundTimer);
+  $('#ingameVideoWrap').classList.remove('frozen');
+  Outcome.reset();
   ResultFx.stop();
   cancelResAmountAnimation();
 }
@@ -454,8 +454,8 @@ function shakePlay() {
 }
 
 // ===== IN-GAME =====
-let finishTimer = null, clipCueTimer = null, revealTimer = null;
-const REVEAL_HOLD = 2300;   // how long the frozen frame + outcome stays up
+let finishTimer = null, revealTimer = null, outcomeSoundTimer = null;
+const REVEAL_HOLD = 3200;   // how long the outcome card stays up before the result screen
 
 function showInGame(round) {
   const s = round.shooter, g = round.goalie;
@@ -465,7 +465,6 @@ function showInGame(round) {
   mb.style.setProperty('--shooter-accent', s.accent);
   mb.style.setProperty('--goalie-accent', g.accent);
   $('#ingameRound').textContent = `#${round.id}`;
-  $('#shotBanner').classList.remove('show', 'save');
 
   $('#ingameMarkets').innerHTML = round.results.map((bet, i) => `
     <div class="res-bet-card igm-bet-card" data-i="${i}" style="--i:${i}">
@@ -484,7 +483,9 @@ function showInGame(round) {
   updateAutoChip();
 
   const wrap = $('#ingameVideoWrap');
-  wrap.classList.remove('frozen', 'goal-lit', 'revealed', 'reveal-save');
+  wrap.classList.remove('frozen');
+  Outcome.reset();
+  Outcome.prepare(s, g);
 
   // The intro plays over the start of the clip. When the clip ends (just
   // before the puck reaches the net) the frame freezes and the drawn outcome
@@ -494,8 +495,7 @@ function showInGame(round) {
   const freezeAndReveal = () => {
     if (revealed || round !== state.round) return;
     revealed = true;
-    clearTimeout(clipCueTimer);
-    ShotClip.stop();
+      ShotClip.stop();
     Sfx.play(round.outcome.shot === 'B' ? 'snap' : 'slap');
     void wrap.offsetWidth;
     wrap.classList.add('frozen');
@@ -505,12 +505,11 @@ function showInGame(round) {
     }, reduceMotion() ? 0 : 380);
   };
 
+  // The clip's commentary and arena sound carry the build-up
   ShotClip.play(s, {
     onEnd: freezeAndReveal,
     onFail: () => { if (introDone) freezeAndReveal(); else pending = true; },
   });
-  Sfx.play('murmur', 4.6);
-  clipCueTimer = setTimeout(() => Sfx.play('skate'), 2200);
 
   // Timer-driven (not rAF) so a round still settles in a background tab
   Intro.play({
@@ -539,20 +538,12 @@ function revealOutcome(round, { silent = false } = {}) {
   // half of all misses ring off the iron (cosmetic only)
   round.variant = round.outcome.save === 'M' && Math.random() < 0.5 ? 'post' : null;
   const d = describeOutcome(round.outcome, round.shooter, round.goalie, round.variant);
-  const wrap = $('#ingameVideoWrap');
-  $('#shotRevealWord').textContent = d.what === 'Goal' ? 'Goal!' : d.what === 'Miss' ? (round.variant === 'post' ? 'Post!' : 'Miss!') : 'Save!';
-  $('#shotRevealDetail').textContent = d.how;
-  wrap.classList.toggle('reveal-save', !round.outcome.goal);
-  wrap.classList.toggle('goal-lit', round.outcome.goal);
-  wrap.classList.add('frozen', 'revealed');
-  if (!silent) playOutcomeSound(round.outcome, round.variant);
-  const hero = round.outcome.goal || round.outcome.save === 'M' ? round.shooter : round.goalie;
-  $('#shotBannerThumb').innerHTML = miniHTML(hero);
-  $('#shotBannerName').textContent = d.who;
-  $('#shotBannerHead').textContent = d.head;
-  $('#shotBannerDetail').textContent = d.how;
-  $('#shotBanner').classList.toggle('save', d.cls === 'save');
-  $('#shotBanner').classList.add('show');
+  Outcome.show({ outcome: round.outcome, variant: round.variant, d, shooter: round.shooter, goalie: round.goalie });
+  if (!silent) {
+    // goals and misses wait for the puck to reach the net on the card
+    const delay = round.outcome.goal || round.outcome.save === 'M' ? Outcome.IMPACT_MS : 250;
+    outcomeSoundTimer = setTimeout(() => playOutcomeSound(round.outcome, round.variant), reduceMotion() ? 0 : delay);
+  }
 
   round.results.forEach((r, i) => {
     const card = document.querySelector(`#ingameMarkets .igm-bet-card[data-i="${i}"]`);
@@ -572,7 +563,6 @@ function creditPayout(round) {
 
 function skipIngame() {
   clearTimeout(finishTimer);
-  clearTimeout(clipCueTimer);
   clearTimeout(revealTimer);
   Intro.reset();
   ShotClip.stop();
@@ -1028,6 +1018,7 @@ function bindEvents() {
 
   $('#btnSound').addEventListener('click', () => {
     Sfx.setEnabled(!Sfx.enabled);
+    ShotClip.syncSound();
     updateSoundButton();
     Sfx.play('select');
   });

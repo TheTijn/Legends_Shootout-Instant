@@ -1,17 +1,18 @@
-# source file | shooter file slug | clip goalie | cut (s, just before the deke/release; the puck never crosses the line)
-Borque (Home) - Joseph (Home).mp4|Ray_Bourque|Curtis_Joseph|5.80
-Clarke (Away) - Balfour (Home).mp4|Bobby_Clarke|Ed_Belfour|5.63
-Dionne (Home) - Balfour (Home).mp4|Marcel_Dionne|Ed_Belfour|5.33
-Francis (Home) - Hextall (Home).mp4|Ron_Francis|Ron_Hextall|5.60
-Hull (Home) -  Fuhr (Away).mp4|Brett_Hull|Grant_Fuhr|5.80
-Lindstrom (Home) - Hextall (Away).mp4|Nicklas_Lidstrom|Ron_Hextall|5.73
-Messier (Home) - Balfour (Away).mp4|Mark_Messier|Ed_Belfour|5.57
-Pronger (Home) - Hasek (Home).mp4|Chris_Pronger|Dominik_Hasek|5.77
-Recchi (Home) - Gigurre (Home).mp4|Mark_Recchi|Jean-Sebastien_Giguere|5.80
-Robitaille (Home) - Hasek ( Away).mp4|Luc_Robitaille|Dominik_Hasek|5.77
-Roenick (Home) - Hextall (Away).mp4|Jeremy_Roenick|Ron_Hextall|5.23
-Sakic (Home) - Giguere (Away).mp4|Joe_Sakic|Jean-Sebastien_Giguere|5.60
-Savard (Home)  - Fuhr (Home).mp4|Denis_Savard|Grant_Fuhr|5.40
-Selanne (Home) - Joseph (Away).mp4|Teemu_Selanne|Curtis_Joseph|5.33
-Sundin (Home) - Hasek (Away).mp4|Mats_Sundin|Dominik_Hasek|5.33
-Yzerman (Away) - Joseph (Home).mp4|Steve_Yzerman|Curtis_Joseph|5.13
+# source file (from the repo root) | shooter file slug | clip goalie | cut (s)
+# Commentary clips (LegendShootout_MP4/, named <shooter id>_<goalie id>_<take><result>).
+# Shooters without their own clip borrow one (BORROW in public/js/clip.js).
+# Kits checked against the roster: Messier Rangers blue, Yzerman Red Wings red,
+# Clarke Flyers white, Savard Canadiens red, Sundin Leafs white; Hasek Sabres,
+# Hextall Flyers orange, Belfour Blackhawks red, Fuhr Oilers.
+# The commentary never names a player, but it does call the shot, so each cut
+# also sits before the first word that gives the shot or result away:
+#   Messier  "…Dangles in," | buries it top-shelf! (goal light 6.27s)
+#   Yzerman  "…Slowly approaches," | grabs on the backhand, puts it far down. Beauty goal!
+#   Clarke   "…Slows into the slot," | shoots it wide!
+#   Savard   "…eyeing up the goaltender, dangles" | in, but the goalie gets a pad on him.
+#   Sundin   "…slows up, dangles" | right in, but the goalie makes the save.
+LegendShootout_MP4/1_1001_1001glo.mp4|Mark_Messier|Dominik_Hasek|5.52
+LegendShootout_MP4/3_1005_1031grb.mp4|Steve_Yzerman|Ron_Hextall|6.56
+LegendShootout_MP4/10_1002_1001mrh.mp4|Bobby_Clarke|Ed_Belfour|6.70
+LegendShootout_MP4/11_1003_1039mrh.mp4|Denis_Savard|Grant_Fuhr|6.93
+LegendShootout_MP4/16_1002_1061mrh.mp4|Mats_Sundin|Ed_Belfour|7.19

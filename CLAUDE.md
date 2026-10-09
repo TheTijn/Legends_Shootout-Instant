@@ -5,8 +5,8 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 ## Commands
 - `npm start`: compiles SCSS, then serves `public/` on http://localhost:3001 (iHockey uses 3000).
 - `npm run dev`: SCSS watch plus server auto-restart.
-- `npm run images`: regenerates the player art from `Players_Series_01*/` (needs ImageMagick and cwebp).
-- `npm run clips`: re-encodes `public/assets/clips/` from `Video clips/` using the cut points in `scripts/clips.txt` (needs ffmpeg).
+- `npm run images`: regenerates the player art from `Players_Series_01*/` and the trading cards from `PLAYERS_CARDS/` (needs ImageMagick and cwebp). `npm run images -- cards` rebuilds the cards only.
+- `npm run clips [-- <slug> ...]`: re-encodes `public/assets/clips/` from `LegendShootout_MP4/` using the cut points in `scripts/clips.txt` (needs ffmpeg). Pass slugs to rebuild only those clips.
 
 ## Layout
 - `public/index.html` holds all markup. Overlays are toggled with `.visible` / `.active` classes, as in iHockey.
@@ -19,11 +19,13 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
     - On the right are the markets, then the live bets, then the result, with the betslip docked at the bottom of the column.
 - `scss/_backdrop.scss` draws the frosted-ice background with rink markings behind the framed layouts (≥ 480px).
 - Player figures come in three helpers: `playerHTML` (full cut-out), `miniHTML` (small full body with name and role beneath, used in the matchbar, result bar and banner) and `avatarHTML` (head crop, history only).
+- The outcome card shows the deciding player as their trading card instead (`cardSrc()` in `data.js`, `.lgo-card`): the shooter on the left for goals and misses, the goalie on the right for saves.
 - `public/js/`, in load order:
   - `data.js`: roster, labels, markets, `artSrc()`
   - `pricing.js`: odds model and crypto RNG, unchanged from the prototype
   - `audio.js`: Web Audio synthesised SFX (`Sfx`)
   - `intro.js`: face-off sting (`Intro`)
+  - `outcome.js`: the animated outcome card shown when the clip ends (`Outcome`)
   - `clip.js`: the shooter's broadcast clip (`ShotClip`)
   - `fx.js`: result confetti (`ResultFx`)
   - `game.js`: state, round flow, betslip, Auto Play, history
@@ -35,6 +37,7 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 - SCSS is the source of truth. Never edit `public/css/style.css`; run `npm run sass`.
 - Bump `?v=N` on the CSS/JS links in `index.html` when deploying.
 - Player art lives at `assets/players/<series01|flipped>/<file>.webp` (200px tall) plus `@2x` (400px).
+- Trading cards live at `assets/players/cards/<file>.webp` (480px tall) plus `@2x` (960px), built from `PLAYERS_CARDS/<First Last>.jpg`. Skip `CARDS.jpg`: it is the contact sheet, and its names have typos.
   - Each player's `art` field picks the variant where the shooter faces right and the goalie faces left.
   - Never mirror art with CSS: numbers and crests would read backwards.
   - `head: {x, y}` (% of the image) centres the circular avatar crops.
@@ -42,16 +45,22 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 - History and balance persist in `sessionStorage` (`legends_history`, `legends_balance`). The sound preference persists in `localStorage` (`legends_sound`).
 
 ## Shot presentation
-- The shot is video only. The intro sting plays over the shooter's clip (`assets/clips/<shooter file>.mp4`, 960×540, about 4.3s, silent).
-- When the clip ends, the frame freezes (`.frozen`: slight push-in, flash) and the drawn outcome is stamped over it by `revealOutcome()` in `game.js`:
-  - the stamp reads GOAL!, SAVE!, MISS! or POST!, with the detail underneath;
-  - a goal also gets the red goal light (`.goal-lit`);
-  - the lower-third banner and the outcome sounds play at the same time.
-  - The result screen follows after `REVEAL_HOLD`.
-- Every source clip is a goal. Each one is cut in `scripts/clips.txt` just before the deke or release, so the footage never shows the puck crossing the line and a save can't contradict it.
-- Cut points were found from the pink goal-light flash on the boards, minus 0.5s, or minus 0.9s for close-in dekes.
+- The shot is video only, and every clip has commentary. The intro sting plays over the shooter's clip (`assets/clips/<file>.mp4`).
+  - Clips come from `LegendShootout_MP4/`: 640×360, 5.5–7.2s from the first word of the call, stereo AAC at -18 LUFS.
+  - Only Messier, Yzerman, Clarke, Savard and Sundin have their own clip. The other shooters borrow the clip whose kit looks closest (`BORROW` in `clip.js`).
+  - Clips play with sound when the sound toggle is on, and fall back to muted if autoplay with sound is refused. The clip's own arena sound carries the build-up (there is no synthesised crowd bed).
+  - The old silent clips (`Video clips/`) are no longer used.
+  - Source names are `<shooter id>_<goalie id>_<take><result>.mp4`, using the roster ids in `data.js`.
+- When the clip ends, the frame freezes with a flash and `Outcome.show()` (`outcome.js` + `scss/_lg-outcome.scss`) sweeps an animated card over the viewer:
+  - **Goal:** the shooter and GOAL! on the left; on the right an SVG goal with the five target areas, where the puck flies in and lands in the scored area, which lights up with a net ripple.
+  - **Miss:** the same goal with the puck going wide or over, or ringing off the post or crossbar with sparks (`variant: 'post'`).
+  - **Save:** SAVE! with the goalie and the save type.
+  - Outcome sounds are timed to the puck landing (`Outcome.IMPACT_MS`). The result screen follows after `REVEAL_HOLD`.
+- Each clip is cut in `scripts/clips.txt` just before the deke or release, so the footage never shows the result and the drawn outcome can't be contradicted.
+  - The sources are goals, saves and misses, and the commentator calls the shot type and the result ("on the backhand", "shoots it wide"). Each cut also sits in the silent gap before the first such word; the safe last words are listed in `clips.txt`.
+  - The commentary never names a player, so a borrowed clip never names the wrong one.
 - Each clip shows the goalie it was recorded against (listed in `clips.txt`), not the goalie the player picked.
-- If a clip can't start within 2.5s, the reveal runs over its poster frame. If it stalls, the reveal happens at the clip's duration plus 3s.
+- If a clip can't start within 2.5s, the outcome card runs over its poster frame. If it stalls, the reveal happens at the clip's duration plus 3s.
 - All round timing is timer-driven, so a round still settles in a background tab.
 
 ## Dev hooks

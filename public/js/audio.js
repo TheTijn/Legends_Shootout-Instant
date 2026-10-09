@@ -69,10 +69,6 @@ const Sfx = (() => {
       noise({ dur: 0.12, type: 'lowpass', f: 2200, peak: 0.25 });
       tone({ t: 0.01, f: 660, f2: 640, dur: 0.5, type: 'triangle', peak: 0.06 });
     },
-    skate(t = 0) {
-      noise({ t, dur: 0.32, type: 'bandpass', f: 4200, f2: 2600, q: 2.5, peak: 0.12, a: 0.06 });
-      noise({ t: t + 0.36, dur: 0.3, type: 'bandpass', f: 4600, f2: 3000, q: 2.5, peak: 0.1, a: 0.05 });
-    },
     slap() {
       noise({ dur: 0.07, type: 'highpass', f: 1800, peak: 0.6, a: 0.001 });
       tone({ f: 160, f2: 60, dur: 0.12, type: 'sine', peak: 0.5, a: 0.001 });
@@ -141,10 +137,6 @@ const Sfx = (() => {
     lose() {
       tone({ f: 330, f2: 300, dur: 0.25, type: 'triangle', peak: 0.1 });
       tone({ t: 0.18, f: 262, f2: 240, dur: 0.4, type: 'triangle', peak: 0.1 });
-    },
-    murmur(dur = 4) { // arena crowd bed under the video clip
-      noise({ dur, type: 'bandpass', f: 650, f2: 900, q: 0.5, peak: 0.09, a: 0.5 });
-      noise({ t: 0.2, dur: dur - 0.2, type: 'bandpass', f: 1800, q: 0.8, peak: 0.035, a: 0.6 });
     },
     coin() { tone({ f: 1760 + Math.random() * 400, dur: 0.08, type: 'triangle', peak: 0.05 }); },
   };
