@@ -23,7 +23,6 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
   - `data.js`: roster, labels, markets, `artSrc()`
   - `pricing.js`: odds model and crypto RNG, unchanged from the prototype
   - `audio.js`: Web Audio synthesised SFX (`Sfx`)
-  - `scene.js`: canvas shot animation (`ShotScene`)
   - `intro.js`: face-off sting (`Intro`)
   - `clip.js`: the shooter's broadcast clip (`ShotClip`)
   - `fx.js`: result confetti (`ResultFx`)
@@ -43,18 +42,17 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 - History and balance persist in `sessionStorage` (`legends_history`, `legends_balance`). The sound preference persists in `localStorage` (`legends_sound`).
 
 ## Shot presentation
-- The intro sting plays over the shooter's clip (`assets/clips/<shooter file>.mp4`, 960×540, about 4.3s, silent). The clip then flash-cuts to the canvas "net cam" (`ShotScene.start({ quick: true })`), which shows the drawn outcome.
+- The shot is video only. The intro sting plays over the shooter's clip (`assets/clips/<shooter file>.mp4`, 960×540, about 4.3s, silent).
+- When the clip ends, the frame freezes (`.frozen`: slight push-in, flash) and the drawn outcome is stamped over it by `revealOutcome()` in `game.js`:
+  - the stamp reads GOAL!, SAVE!, MISS! or POST!, with the detail underneath;
+  - a goal also gets the red goal light (`.goal-lit`);
+  - the lower-third banner and the outcome sounds play at the same time.
+  - The result screen follows after `REVEAL_HOLD`.
 - Every source clip is a goal. Each one is cut in `scripts/clips.txt` just before the deke or release, so the footage never shows the puck crossing the line and a save can't contradict it.
 - Cut points were found from the pink goal-light flash on the boards, minus 0.5s, or minus 0.9s for close-in dekes.
 - Each clip shows the goalie it was recorded against (listed in `clips.txt`), not the goalie the player picked.
-  - The net cam therefore wears the clip's colours. `ShotClip.kitsFor(shooter)` in `clip.js` returns the goalie kit (jersey, trim, pads, padTrim, pants, mask) and the shooter kit (jersey, trim, gloves, tape).
-  - These colours were sampled from the footage. If a clip is replaced, update them.
-- `scene.js` renders in three layers:
-  - **Pre-rendered arena (`buildArena`):** crowd with depth-of-field blur, glass, boards with the same ads as the clips, textured ice, markings and reflections.
-  - **Per-frame elements:** a 3D-shaded net with mesh bulge, a volume-shaded goalie (`vol()`, `capsule()`, `drawPad()`), the shooter's out-of-focus gloves and stick, a motion-blurred puck and particles.
-  - **Post effects:** haze, slow-mo letterbox, vignette and grain.
-- To review canvas frames while the browser tab is hidden, stub `requestAnimationFrame`, step its callback by hand, then read `canvas.toDataURL()`. The tab doesn't run animation frames while hidden.
-- If a clip can't start within 2.5s, the full canvas scene runs instead. If it stalls, the net cam takes over at the clip's duration plus 3s.
+- If a clip can't start within 2.5s, the reveal runs over its poster frame. If it stalls, the reveal happens at the clip's duration plus 3s.
+- All round timing is timer-driven, so a round still settles in a background tab.
 
 ## Dev hooks
 - `?force=<outcome key>` forces every draw, to review animations. Keys: `FTL FTR FBL FBR FFH BTL BTR BBL BBR BFH` for goals, `NG NB NP NS NM` for saves and misses. It is dev-only, so strip it or disable it before certification.

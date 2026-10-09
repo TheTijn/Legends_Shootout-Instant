@@ -4,9 +4,10 @@
 // shot resolved by drawOutcome() in pricing.js.
 //
 // Round flow: playGame/runAutoplayRound -> startRound (stake + RNG draw)
-//   -> showInGame: Intro sting over the shooter's ShotClip -> net cam
-//      (ShotScene quick) -> revealOutcome (credit) -> showResult
-//   If the clip can't play, the full canvas ShotScene runs instead.
+//   -> showInGame: Intro sting over the shooter's ShotClip -> freeze-frame
+//      reveal of the drawn outcome (revealOutcome credits) -> showResult
+//   Clips are cut before the puck reaches the net, so the footage never
+//   contradicts the result. If a clip can't play, the reveal runs over its poster.
 
 const PLAY_BTN_HTML = 'PLAY <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
 const SCORE_MARKETS = ['SST', 'SSL', 'STL'];
@@ -63,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof savedBalance === 'number' && savedBalance >= 0) state.balance = savedBalance;
 
   buildComboGrid();
-  ShotScene.init($('#shotCanvas'));
   state.shooterIdx = randInt(SHOOTERS.length);
   state.goalieIdx = randInt(GOALIES.length);
   loadMatch();
@@ -126,7 +126,6 @@ function loadMatch({ keepBets = false } = {}) {
   renderOdds();
   syncSelections();
   updateBetslip();
-  ShotScene.drawIdle(goalie());
 }
 
 // One view state on <main>; the stylesheet decides what each breakpoint shows
@@ -146,8 +145,8 @@ function resetViews() {
   Intro.reset();
   ShotClip.stop();
   clearTimeout(clipCueTimer);
-  $('#ingameVideoWrap').classList.remove('phase-video', 'cut', 'netcam');
-  ShotScene.stop();
+  clearTimeout(revealTimer);
+  $('#ingameVideoWrap').classList.remove('frozen', 'goal-lit', 'revealed', 'reveal-save');
   ResultFx.stop();
   cancelResAmountAnimation();
 }
@@ -435,7 +434,8 @@ function shakePlay() {
 }
 
 // ===== IN-GAME =====
-let finishTimer = null, clipCueTimer = null;
+let finishTimer = null, clipCueTimer = null, revealTimer = null;
+const REVEAL_HOLD = 2300;   // how long the frozen frame + outcome stays up
 
 function showInGame(round) {
   const s = round.shooter, g = round.goalie;
@@ -463,35 +463,31 @@ function showInGame(round) {
   setView('ingame');
   updateAutoChip();
 
-  const clipKits = ShotClip.kitsFor(s);   // net cam wears the clip's colours
-  ShotScene.drawIdle(g, clipKits && clipKits.goalie);
   const wrap = $('#ingameVideoWrap');
-  wrap.classList.remove('cut', 'netcam');
-  wrap.classList.add('phase-video');
+  wrap.classList.remove('frozen', 'goal-lit', 'revealed', 'reveal-save');
 
-  // The intro plays over the start of the clip. The clip ends just before the
-  // shot, then we flash-cut to the net cam for the drawn outcome. If the clip
-  // can't play, the full canvas scene runs once the intro is done.
-  let introDone = false, sceneStarted = false, pendingFull = false;
-  const startScene = (quick) => {
-    if (sceneStarted || round !== state.round) return;
-    sceneStarted = true;
+  // The intro plays over the start of the clip. When the clip ends (just
+  // before the puck reaches the net) the frame freezes and the drawn outcome
+  // is stamped over it. If the clip can't play, the same reveal runs over the
+  // poster once the intro is done.
+  let introDone = false, revealed = false, pending = false;
+  const freezeAndReveal = () => {
+    if (revealed || round !== state.round) return;
+    revealed = true;
     clearTimeout(clipCueTimer);
     ShotClip.stop();
-    wrap.classList.remove('phase-video');
-    if (quick) { void wrap.offsetWidth; wrap.classList.add('cut', 'netcam'); }
-    ShotScene.start({
-      outcome: round.outcome, shooter: s, goalie: g, quick,
-      kit: quick && clipKits ? clipKits.goalie : null,
-      shooterKit: quick && clipKits ? clipKits.shooter : null,
-      onReveal: (info) => revealOutcome(round, info),
-      onDone: () => { finishTimer = setTimeout(finishIngame, 700); },
-    });
+    Sfx.play(round.outcome.shot === 'B' ? 'snap' : 'slap');
+    void wrap.offsetWidth;
+    wrap.classList.add('frozen');
+    revealTimer = setTimeout(() => {
+      revealOutcome(round);
+      finishTimer = setTimeout(finishIngame, REVEAL_HOLD);
+    }, reduceMotion() ? 0 : 380);
   };
 
   ShotClip.play(s, {
-    onEnd: () => startScene(true),
-    onFail: () => { if (introDone) startScene(false); else pendingFull = true; },
+    onEnd: freezeAndReveal,
+    onFail: () => { if (introDone) freezeAndReveal(); else pending = true; },
   });
   Sfx.play('murmur', 4.6);
   clipCueTimer = setTimeout(() => Sfx.play('skate'), 2200);
@@ -502,14 +498,34 @@ function showInGame(round) {
     goalieHTML: playerHTML(g, { hi: true, num: false }),
     shooterName: s.name, goalieName: g.name,
     shooterAccent: s.accent, goalieAccent: g.accent,
-    onDone: () => { introDone = true; if (pendingFull) startScene(false); },
+    onDone: () => { introDone = true; if (pending) freezeAndReveal(); },
   });
 }
 
-function revealOutcome(round, info = {}) {
-  if (round !== state.round) return;
-  round.variant = info.variant || null;
+// Outcome sounds that used to come from the canvas scene
+function playOutcomeSound(o, variant) {
+  if (o.goal) {
+    Sfx.play('net');
+    setTimeout(() => Sfx.play('horn'), 140);
+    Sfx.play('crowdCheer');
+  } else {
+    Sfx.play({ G: 'glove', B: 'pad', P: 'pad', S: 'stick', M: variant === 'post' ? 'post' : 'boards' }[o.save]);
+    Sfx.play('crowdOoh');
+  }
+}
+
+function revealOutcome(round, { silent = false } = {}) {
+  if (round !== state.round || round.credited) return;
+  // half of all misses ring off the iron (cosmetic only)
+  round.variant = round.outcome.save === 'M' && Math.random() < 0.5 ? 'post' : null;
   const d = describeOutcome(round.outcome, round.shooter, round.goalie, round.variant);
+  const wrap = $('#ingameVideoWrap');
+  $('#shotRevealWord').textContent = d.what === 'Goal' ? 'Goal!' : d.what === 'Miss' ? (round.variant === 'post' ? 'Post!' : 'Miss!') : 'Save!';
+  $('#shotRevealDetail').textContent = d.how;
+  wrap.classList.toggle('reveal-save', !round.outcome.goal);
+  wrap.classList.toggle('goal-lit', round.outcome.goal);
+  wrap.classList.add('frozen', 'revealed');
+  if (!silent) playOutcomeSound(round.outcome, round.variant);
   const hero = round.outcome.goal || round.outcome.save === 'M' ? round.shooter : round.goalie;
   $('#shotBannerThumb').innerHTML = miniHTML(hero);
   $('#shotBannerName').textContent = d.who;
@@ -537,10 +553,9 @@ function creditPayout(round) {
 function skipIngame() {
   clearTimeout(finishTimer);
   clearTimeout(clipCueTimer);
+  clearTimeout(revealTimer);
   Intro.reset();
   ShotClip.stop();
-  ShotScene.skip();          // fires onReveal (if the shot started) then onDone
-  clearTimeout(finishTimer);
   finishIngame();
 }
 
@@ -548,10 +563,10 @@ function finishIngame() {
   clearTimeout(finishTimer);
   if (!inView('ingame')) return;
   const round = state.round;
+  clearTimeout(revealTimer);
   Intro.reset();
   ShotClip.stop();
-  ShotScene.stop();
-  if (!round.credited) revealOutcome(round, {});
+  if (!round.credited) revealOutcome(round, { silent: true });
   showResult(round);
   saveToHistory(round);
   afterAutoplayRound(round);
