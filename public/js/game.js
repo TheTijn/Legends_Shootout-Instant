@@ -52,6 +52,14 @@ const store = {
 // builds that strip query strings.
 const FORCED = new URLSearchParams(location.search).get('force');
 
+// Results mode (Settings menu): 'maths' draws every shot from the priced
+// distribution; 'forced' is a demo mode where rounds alternate goal / save.
+// The mode persists per browser, the alternation per session.
+const MODE_KEY = 'legends_results_mode';
+const FORCED_NEXT_KEY = 'legends_forced_next';
+let resultsMode = 'maths';
+try { if (localStorage.getItem(MODE_KEY) === 'forced') resultsMode = 'forced'; } catch (e) { /* storage blocked */ }
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   // Remove player <img> that fail to load so the initials fallback shows through
@@ -70,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindEvents();
   updateBalance();
   updateSoundButton();
+  updateSettings();
   positionBetslip();
   window.addEventListener('resize', positionBetslip);
   preloadArt();
@@ -415,7 +424,19 @@ function drawRoundOutcome() {
     const o = state.priced.outcomes.find(x => x.key === FORCED.toUpperCase());
     if (o) return o;
   }
+  if (resultsMode === 'forced') return drawAlternating();
   return drawOutcome(state.priced.outcomes);
+}
+
+// Forced results: goal, save, goal, ... The goal (shot type + area) or the save
+// type is still drawn from the priced odds, renormalised, so rounds vary.
+// Misses are left out: a forced no-goal is always a save.
+function drawAlternating() {
+  const goal = store.get(FORCED_NEXT_KEY, 'goal') !== 'save';
+  store.set(FORCED_NEXT_KEY, goal ? 'save' : 'goal');
+  const pool = state.priced.outcomes.filter(o => (goal ? o.goal : !o.goal && o.save !== 'M'));
+  const total = pool.reduce((sum, o) => sum + o.p, 0);
+  return drawOutcome(pool.map(o => ({ ...o, p: o.p / total })));
 }
 
 // Takes the stake and draws the outcome. Returns the round, or null if it can't be played.
@@ -952,6 +973,30 @@ function positionBetslip() {
   $('#betslip').style.bottom = offset > 4 ? `${Math.round(offset)}px` : '';
 }
 
+// ===== SETTINGS =====
+function setResultsMode(mode) {
+  if (mode === resultsMode) return;
+  resultsMode = mode;
+  try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* storage blocked */ }
+  if (mode === 'forced') store.set(FORCED_NEXT_KEY, 'goal'); // always start with a goal
+  updateSettings();
+  Sfx.play('select');
+}
+
+function updateSettings() {
+  const forced = resultsMode === 'forced';
+  $('#btnSettings').classList.toggle('forced', forced);
+  $('#btnSettings').setAttribute('aria-label', forced ? 'Settings (forced results on)' : 'Settings');
+  $$('#settingsMenu [data-mode]').forEach(b => b.setAttribute('aria-checked', b.dataset.mode === resultsMode));
+  $$('#settingsMenu [data-for]').forEach(p => { p.hidden = p.dataset.for !== resultsMode; });
+}
+
+function toggleSettings(open = !$('#settingsMenu').classList.contains('open')) {
+  $('#settingsMenu').classList.toggle('open', open);
+  $('#btnSettings').setAttribute('aria-expanded', open);
+  if (open) Sfx.play('tick');
+}
+
 // ===== SOUND =====
 function updateSoundButton() {
   const b = $('#btnSound');
@@ -1008,6 +1053,9 @@ function bindEvents() {
   $('#btnHistoryClose').addEventListener('click', () => closeOverlay('#historyOverlay'));
   $('#historyOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeOverlay('#historyOverlay'); });
 
+  $('#btnSettings').addEventListener('click', () => toggleSettings());
+  $$('#settingsMenu [data-mode]').forEach(b => b.addEventListener('click', () => setResultsMode(b.dataset.mode)));
+  document.addEventListener('click', (e) => { if (!e.target.closest('.lg-settings')) toggleSettings(false); });
   $('#btnMaths').addEventListener('click', () => { renderMaths(); openOverlay('#mathsOverlay', '#btnMathsClose'); });
   $('#btnMathsClose').addEventListener('click', () => closeOverlay('#mathsOverlay'));
   $('#mathsOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeOverlay('#mathsOverlay'); });
@@ -1045,7 +1093,7 @@ function bindEvents() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    closeSelector(); closeOverlay('#historyOverlay'); closeOverlay('#mathsOverlay');
+    closeSelector(); closeOverlay('#historyOverlay'); closeOverlay('#mathsOverlay'); toggleSettings(false);
     $('#helpOverlay').classList.remove('visible');
     $('#autoplayOverlay').classList.remove('visible');
     $('#stakePanel').classList.remove('open');

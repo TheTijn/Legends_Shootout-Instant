@@ -4193,6 +4193,115 @@ html {
     display: none;
   }
 }
+.lg-settings {
+  position: relative;
+}
+
+.lg-settings-btn {
+  position: relative;
+}
+.lg-settings-btn[aria-expanded=true] {
+  color: #ffffff;
+}
+.lg-settings-btn.forced {
+  color: #f5a623;
+}
+
+.lg-settings-dot {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f5a623;
+  box-shadow: 0 0 0 2px #0d1528;
+  display: none;
+}
+.forced .lg-settings-dot {
+  display: block;
+}
+
+.lg-settings-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -6px;
+  z-index: 120;
+  width: 248px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #162035;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
+}
+.lg-settings-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.lg-settings-title {
+  display: block;
+  margin-bottom: 8px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #809DBB;
+}
+
+.lg-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.lg-seg button {
+  padding: 8px 4px;
+  border-radius: 4px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #6b8099;
+  background: none;
+  transition: color 0.15s, background 0.15s;
+}
+.lg-seg button:hover {
+  color: #ffffff;
+}
+.lg-seg button[aria-checked=true] {
+  color: #ffffff;
+  background: #1a2944;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.lg-seg button[data-mode=forced][aria-checked=true] {
+  color: #0a1120;
+  background: #f5a623;
+  box-shadow: none;
+}
+
+.lg-settings-note {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #c3d2e2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-settings-menu {
+    transition: none;
+  }
+}
 .lg-backdrop {
   display: none;
 }

@@ -1,0 +1,91 @@
+// ===== SETTINGS MENU (header, next to sound) =====
+// Results mode: correct maths or forced (goal / save alternating, demo only).
+// Toggled by toggleSettings() / setResultsMode() in game.js.
+
+.lg-settings { position: relative; }
+
+.lg-settings-btn {
+  position: relative;
+  &[aria-expanded="true"] { color: $text-white; }
+  &.forced { color: $accent-gold; }
+}
+
+// Shows forced results are on while the menu is closed
+.lg-settings-dot {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $accent-gold;
+  box-shadow: 0 0 0 2px $bg-panel;
+  display: none;
+  .forced & { display: block; }
+}
+
+.lg-settings-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -6px;
+  z-index: 120;
+  width: 248px;
+  padding: 12px;
+  border-radius: $radius-lg;
+  background: $lg-panel-2;
+  border: 1px solid $border-hover;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
+
+  &.open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+}
+
+.lg-settings-title {
+  display: block;
+  margin-bottom: 8px;
+  @include condensed(0.75rem, 600, 1.5px);
+  text-transform: uppercase;
+  color: $text-muted;
+}
+
+.lg-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  border-radius: $radius-md;
+  background: rgba(0, 0, 0, 0.3);
+
+  button {
+    padding: 8px 4px;
+    border-radius: $radius-sm;
+    @include condensed(0.85rem, 700, 0.5px);
+    text-transform: uppercase;
+    color: $text-dim;
+    background: none;
+    transition: color 0.15s, background 0.15s;
+
+    &:hover { color: $text-white; }
+    &[aria-checked="true"] { color: $text-white; background: $lg-tab-active; box-shadow: inset 0 0 0 1px $border-hover; }
+    &[data-mode="forced"][aria-checked="true"] { color: $bg-primary; background: $accent-gold; box-shadow: none; }
+  }
+}
+
+.lg-settings-note {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: $lg-copy;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-settings-menu { transition: none; }
+}

@@ -42,7 +42,7 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
   - Never mirror art with CSS: numbers and crests would read backwards.
   - `head: {x, y}` (% of the image) centres the circular avatar crops.
 - Do not change pricing maths in `pricing.js` without the certified OddsGenerator spec. The parameters are placeholders from Working Spec v0.04.
-- History and balance persist in `sessionStorage` (`legends_history`, `legends_balance`). The sound preference persists in `localStorage` (`legends_sound`).
+- History and balance persist in `sessionStorage` (`legends_history`, `legends_balance`). The sound and results-mode preferences persist in `localStorage` (`legends_sound`, `legends_results_mode`).
 
 ## Shot presentation
 - The shot is video only, and every clip has commentary. The intro sting plays over the shooter's clip (`assets/clips/<file>.mp4`).
@@ -64,7 +64,12 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 - All round timing is timer-driven, so a round still settles in a background tab.
 
 ## Dev hooks
-- `?force=<outcome key>` forces every draw, to review animations. Keys: `FTL FTR FBL FBR FFH BTL BTR BBL BBR BFH` for goals, `NG NB NP NS NM` for saves and misses. It is dev-only, so strip it or disable it before certification.
+- **Settings menu** (gear, next to sound): switches results between **Correct maths** (drawn from the priced odds) and **Forced results**.
+  - In forced mode, rounds alternate goal, save, goal…, starting with a goal whenever the mode is switched on. Within each, the shot type and area (or the save type) is drawn from the priced odds, renormalised. Misses never come up.
+  - Wins still pay the normal odds, so it is a demo mode only and must be removed or disabled before certification.
+  - The mode persists in `localStorage` (`legends_results_mode`), the alternation in `sessionStorage` (`legends_forced_next`). `drawRoundOutcome()` in `game.js` applies it; `pricing.js` is untouched.
+  - A gold dot on the gear shows forced mode is on.
+- `?force=<outcome key>` overrides both modes and forces every draw, to review animations. Keys: `FTL FTR FBL FBR FFH BTL BTR BBL BBR BFH` for goals, `NG NB NP NS NM` for saves and misses. It is dev-only, so strip it or disable it before certification.
 
 ## Deploy
 `.github/workflows/deploy.yml` is the Hostinger FTP workflow copied from iHockey. It is manual only (`workflow_dispatch`), and `server-dir` is a TODO. Note that `dangerous-clean-slate` wipes the target folder.

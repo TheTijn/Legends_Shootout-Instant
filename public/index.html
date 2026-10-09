@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a1120">
   <title>Legends Shootout</title>
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=13">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -43,6 +43,22 @@
       </div>
     </div>
     <div class="header-right">
+      <!-- SETTINGS: results mode (game.js, scss/_lg-settings.scss) -->
+      <div class="lg-settings">
+        <button class="icon-btn lg-settings-btn" id="btnSettings" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settingsMenu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span class="lg-settings-dot" aria-hidden="true"></span>
+        </button>
+        <div class="lg-settings-menu" id="settingsMenu" role="dialog" aria-label="Settings">
+          <span class="lg-settings-title">Results</span>
+          <div class="lg-seg" role="radiogroup" aria-label="Results">
+            <button type="button" role="radio" data-mode="maths" aria-checked="true">Correct maths</button>
+            <button type="button" role="radio" data-mode="forced" aria-checked="false">Forced results</button>
+          </div>
+          <p class="lg-settings-note" data-for="maths">Every shot is drawn from the priced odds.</p>
+          <p class="lg-settings-note" data-for="forced">Rounds alternate goal, save, goal… Shot type, target and save type still vary. Demo only: wins pay the normal odds.</p>
+        </div>
+      </div>
       <button class="icon-btn lg-sound-btn" id="btnSound" title="Sound" aria-label="Turn sound on" aria-pressed="false">
         <svg class="lg-snd-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
         <svg class="lg-snd-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
@@ -499,6 +515,6 @@
   <script src="js/outcome.js?v=4"></script>
   <script src="js/clip.js?v=13"></script>
   <script src="js/fx.js?v=11"></script>
-  <script src="js/game.js?v=14"></script>
+  <script src="js/game.js?v=15"></script>
 </body>
 </html>
