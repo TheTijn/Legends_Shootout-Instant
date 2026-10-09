@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   positionBetslip();
   window.addEventListener('resize', positionBetslip);
   preloadArt();
+  setTimeout(shimmerBets, 450);
 });
 
 // Warm the cache so swaps, the selector and the intro never pop in
@@ -138,6 +139,24 @@ function setView(view) {
 const inView = (view) => $('#mainContent').classList.contains(`view-${view}`);
 const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches;
 
+// Soft glint across every odds button, staggered by position on screen
+let shimmerTimer = null;
+function shimmerBets() {
+  if (reduceMotion()) return;
+  const main = $('#mainContent');
+  const btns = [...main.querySelectorAll('#matchHeader .odd-btn, .markets-section .lg-panel.active .odd-btn, .markets-section .lg-panel.active .lg-zone')];
+  if (!btns.length) return;
+  const top = Math.min(...btns.map(b => b.getBoundingClientRect().top));
+  btns.forEach(b => {
+    const r = b.getBoundingClientRect();
+    b.style.setProperty('--sd', `${Math.round((r.top - top) * 0.9 + r.left * 0.25)}ms`);
+  });
+  main.classList.remove('lg-shimmer'); void main.offsetWidth;
+  main.classList.add('lg-shimmer');
+  clearTimeout(shimmerTimer);
+  shimmerTimer = setTimeout(() => main.classList.remove('lg-shimmer'), 2600);
+}
+
 function resetViews() {
   setView('idle');
   $('#resultOverlay').classList.remove('visible');
@@ -167,6 +186,7 @@ function newRandomMatchup() {
   state.goalieIdx = randInt(GOALIES.length);
   loadMatch();
   animateStages(['shooter', 'goalie']);
+  if (!state.autoplay.active) setTimeout(shimmerBets, 300);
 }
 
 function cycle(role, dir) {
