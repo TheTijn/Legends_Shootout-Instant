@@ -150,7 +150,8 @@
   transition: border-color 0.15s ease;
 
   &:focus-within {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: $accent-light;
+    box-shadow: 0 0 0 1px $accent-light;
   }
 }
 

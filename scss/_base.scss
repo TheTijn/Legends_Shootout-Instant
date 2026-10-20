@@ -27,7 +27,7 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid #4a90d9;
+  outline: 2px solid $accent-light;
   outline-offset: 2px;
 }
 
@@ -38,10 +38,13 @@ input:focus-visible {
 }
 
 // ===== HEADER =====
+// Three columns: the two equal side columns keep the wordmark centred, and
+// they grow (pushing the wordmark over) rather than letting it overlap the icons.
 .header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 8px;
   padding: 6px 12px;
   background: $bg-panel;
   border-bottom: 1px solid $border-subtle;
@@ -51,14 +54,12 @@ input:focus-visible {
   max-width: $max-width;
   margin: 0 auto;
 
-  &-left { display: flex; gap: 6px; }
+  &-left { display: flex; gap: 6px; justify-self: start; }
 
   &-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
   &-logo {
@@ -77,6 +78,16 @@ input:focus-visible {
   transition: color 0.2s;
 
   &:hover { color: $text-white; }
+}
+
+// Narrow phones: tighter icons so both sides fit beside the wordmark
+// (each button stays at least 28px square for touch).
+@media (max-width: 400px) {
+  .header { padding-left: 8px; padding-right: 8px; column-gap: 4px; }
+  .header .header-left { gap: 0; }
+  .header .header-right { gap: 0; }
+  .icon-btn { padding: 5px; }
+  .icon-btn svg { width: 18px; height: 18px; }
 }
 
 .balance-box {

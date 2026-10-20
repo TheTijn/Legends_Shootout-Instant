@@ -66,7 +66,7 @@
   }
 }
 .lg-pick-name { font-family: $font-cond; font-weight: 600; font-size: 0.72rem; line-height: 1.05; text-align: center; }
-.lg-pick-stat { font-family: $font-cond; font-size: 0.68rem; color: $accent; }
+.lg-pick-stat { font-family: $font-cond; font-size: 0.68rem; color: $text-muted; }
 
 // ===== TABS & MARKET PANELS =====
 .lg-tabs {
@@ -83,7 +83,7 @@
   z-index: 1;
   @include condensed(0.86rem, 700, 0.6px);
   text-transform: uppercase;
-  color: $accent;
+  color: $text-muted;
   padding: 8px 0;
   border-radius: 5px;
   transition: background 0.25s, color 0.25s, box-shadow 0.25s;
@@ -208,7 +208,7 @@
   font-family: $font-cond;
   font-size: 0.66rem;
   font-weight: 600;
-  color: $accent;
+  color: $text-muted;
   text-align: center;
   line-height: 1.05;
   align-self: end;
@@ -223,6 +223,117 @@
   align-items: center;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+}
+
+// ===== FEATURED MARKET (Score + Shot Type + Target Area) =====
+// Gold card with a slowly rotating border light, a "Biggest payouts" ribbon and
+// gold-tinted odds, so the top-paying market stands out in place.
+@property --lg-feat-ang {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.lg-featured {
+  position: relative;
+  isolation: isolate;
+  margin-top: 8px;
+  padding: 16px 8px 10px;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgba($accent-gold, 0.16) 0%, transparent 70%),
+    linear-gradient(180deg, #1a1a24 0%, #121a2c 100%);
+  box-shadow:
+    0 0 0 1px rgba($accent-gold, 0.35),
+    0 0 24px rgba($accent-gold, 0.14),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+
+  // Rotating light running around the border
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: conic-gradient(from var(--lg-feat-ang), transparent 0deg, $accent-gold 40deg, #fff3c4 60deg, $accent-gold 80deg, transparent 130deg, transparent 180deg, rgba($accent-gold, 0.9) 220deg, transparent 270deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: lgFeatSpin 5s linear infinite;
+    pointer-events: none;
+  }
+
+  .market-header {
+    color: #ffd27a;
+    font-size: 0.86rem;
+    letter-spacing: 1.6px;
+    text-shadow: 0 0 12px rgba($accent-gold, 0.45);
+  }
+
+  .lg-combo-head { color: $lg-cream; }
+  .lg-combo-row { color: #fff; }
+
+  .odd-btn {
+    background: linear-gradient(180deg, rgba($accent-gold, 0.14) 0%, rgba($accent-gold, 0.05) 100%);
+    border-color: rgba($accent-gold, 0.38);
+
+    &:hover {
+      background: linear-gradient(180deg, rgba($accent-gold, 0.26) 0%, rgba($accent-gold, 0.1) 100%);
+      border-color: $accent-gold;
+      box-shadow: 0 0 12px rgba($accent-gold, 0.3);
+    }
+    &.selected {
+      background: rgba(128, 232, 223, 0.18);
+      border-color: $accent-light;
+      box-shadow: 0 0 0 1px $accent-light, 0 0 14px rgba(128, 232, 223, 0.35);
+      .odd-value { color: $accent-light; }
+    }
+  }
+  .odd-value {
+    color: #ffe2a3;
+    font-weight: 700;
+  }
+}
+
+.lg-featured-sub {
+  margin-top: -3px;
+  font-size: 0.72rem;
+  color: $lg-cream;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+.lg-featured-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  @include condensed(0.68rem, 800, 1.2px);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #1a1206;
+  background: linear-gradient(135deg, #ffd27a 0%, $accent-gold 55%, $accent-gold-dark 100%);
+  box-shadow: 0 2px 10px rgba($accent-gold, 0.45);
+  animation: lgFeatPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes lgFeatSpin {
+  to { --lg-feat-ang: 360deg; }
+}
+@keyframes lgFeatPulse {
+  0%, 100% { box-shadow: 0 2px 10px rgba($accent-gold, 0.45); }
+  50%      { box-shadow: 0 2px 18px rgba($accent-gold, 0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-featured::before,
+  .lg-featured-badge { animation: none; }
 }
 
 // Suspended prices

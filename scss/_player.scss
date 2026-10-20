@@ -185,7 +185,7 @@
   &-role {
     @include condensed(0.6rem, 700, 1.2px);
     text-transform: uppercase;
-    color: $accent;
+    color: $text-muted;
     margin-top: 1px;
   }
 }

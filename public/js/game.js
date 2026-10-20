@@ -107,7 +107,7 @@ function imgTag(p, hi = false) {
 function playerHTML(p, { hi = false, num = true } = {}) {
   return `<span class="lg-player" style="--accent:${p.accent}">
     <span class="lg-player-glow"></span>
-    ${num ? `<span class="lg-player-num">${p.num}</span>` : ''}
+    ${num ? `<span class="lg-player-num" aria-hidden="true">${p.num}</span>` : ''}
     <span class="lg-player-shadow"></span>
     ${imgTag(p, hi)}<span class="lg-player-initials">${initialsOf(p)}</span>
   </span>`;

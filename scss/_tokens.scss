@@ -13,10 +13,11 @@ $win-green-dark: #16a34a;
 $win-green-light: #4ade80;
 
 $text-white: #ffffff;
-$text-muted: $accent;
-$text-dim: #6b8099;
-$text-faint: #506a85;
-$text-label: #bcc3cb;
+// Text greys, all ≥ 7:1 on $bg-panel and ≥ 4.5:1 on the lightest panels (WCAG AA+)
+$text-muted: #b4c6d9;
+$text-dim: #a6bbd0;
+$text-faint: #9fb4ca;
+$text-label: #d3dbe4;
 
 
 
@@ -49,7 +50,7 @@ $lg-ice: #a9c9df;
 $lg-save-blue: #5aa2ff;
 $lg-panel-2: #162035;
 $lg-tab-active: #1a2944;
-$lg-note: #5f7792;
+$lg-note: #a6bbd0;
 $lg-copy: #c3d2e2;
 
 $font-name: 'Montserrat', 'Barlow', sans-serif;

@@ -41,7 +41,17 @@
 .header-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
   gap: 4px;
+}
+
+// Smallest phones (≤ 360px): a smaller wordmark and balance keep the header on one screen width
+@media (max-width: 360px) {
+  .lg-wm-top { font-size: 0.55rem; letter-spacing: 3.4px; margin-right: -3.4px; }
+  .lg-wm-bot { font-size: 1.05rem; }
+  .balance-label { letter-spacing: 1px; }
+  .balance-amount { font-size: 0.9rem; }
 }
 .lg-sound-btn {
   .lg-snd-on { display: none; }
@@ -233,7 +243,7 @@
   margin-top: 2px;
 }
 .lg-arrow {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.75);
   width: 28px;
   height: 36px;
   flex-shrink: 0;
@@ -262,7 +272,7 @@
   font-family: $font-cond;
   font-size: 0.78rem;
   font-weight: 500;
-  color: $accent;
+  color: $text-muted;
   letter-spacing: 0.3px;
 
   strong { color: #fff; font-weight: 700; }

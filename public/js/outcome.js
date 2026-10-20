@@ -187,7 +187,7 @@ const Outcome = (() => {
     root.style.setProperty('--accent', hero.accent);
     root.setAttribute('aria-label', `${d.who}: ${word} ${d.how}`);
     root.innerHTML = `
-      <div class="lgo-bg">
+      <div class="lgo-bg" aria-hidden="true">
         <span class="lgo-panel a"></span><span class="lgo-panel b"></span>
         <span class="lgo-streaks"></span>
         <div class="lgo-ticker"><div>${ticker}</div><div>${ticker}</div></div>

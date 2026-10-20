@@ -232,7 +232,7 @@
   font-size: 8.5px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  fill: rgba(255, 255, 255, 0.55);
+  fill: rgba(255, 255, 255, 0.85);
 
   &.hit {
     .play & { animation: lgoLabelHit 0.4s ease forwards 1.15s; }
@@ -340,7 +340,7 @@
   @include condensed(4.4cqh, 900, 0.3cqh);
   text-transform: uppercase;
   color: #fff;
-  background: linear-gradient(135deg, #4aa3ff, #1d4fb3);
+  background: linear-gradient(135deg, #2a6fc9, #1d4fb3);
   padding: 0.6cqh 1.8cqw 0.4cqh;
   box-shadow: 0.6cqh 0.6cqh 0 rgba(0, 0, 0, 0.4);
   opacity: 0;
