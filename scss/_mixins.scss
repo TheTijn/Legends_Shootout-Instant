@@ -38,11 +38,25 @@
   position: fixed;
   inset: 0;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
 
   &.visible {
     opacity: 1;
+    visibility: visible;
     pointer-events: all;
+  }
+}
+
+// Takes a closed overlay or collapsed panel out of the tab order and the
+// accessibility tree. Add "visibility 0s linear <duration>" to the element's
+// transition so it only disappears once its closing animation has finished.
+@mixin hidden-until($open) {
+  visibility: hidden;
+
+  &#{$open} {
+    visibility: visible;
+    transition-delay: 0s;
   }
 }
 

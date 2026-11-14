@@ -126,7 +126,8 @@ $desk-gutter: 24px;
   // scales down smoothly as the viewer opens above it.
   .main-content .lg-faceoff {
     --stage-h: clamp(250px, calc(100dvh - 420px), 470px);
-    --vs-col: 300px;
+    --vs-col: clamp(220px, 21vw, 300px); // narrower on small laptops, leaving room for the players
+    --fig-k: 1.25;                       // figures may be a little taller than their column is wide
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--vs-col) minmax(0, 1fr);
     grid-template-rows: auto auto auto;
@@ -273,6 +274,7 @@ $desk-gutter: 24px;
     max-width: none;
     transform: none;
     opacity: 1;
+    visibility: visible;
     pointer-events: all;
     border-radius: 0 0 14px 0;
     flex-shrink: 0;

@@ -8,6 +8,7 @@
   inset: 0;
   display: block;
   pointer-events: none;
+  container-type: size; // the figure is sized from this box (cqw / cqh)
 
   &-glow {
     position: absolute;
@@ -50,13 +51,20 @@
     background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 72%);
   }
 
+  // One height for every figure: the box height, capped by its width
+  // (--fig-k) so a tall narrow box doesn't make bodies wider than their column.
+  // --bx (data.js) puts the centre of the body, not of the image, on the
+  // centre line; a stick may reach past the box. "translate" is used so the
+  // idle and entrance animations can keep "transform".
   img {
     position: absolute;
-    inset: 0 -12px 4px;
-    width: calc(100% + 24px);
+    left: 50%;
+    bottom: 4px;
     height: calc(100% - 4px);
-    object-fit: contain;
-    object-position: center bottom;
+    height: calc(min(100cqh - 4px, 100cqw * var(--fig-k, 1.1)) * var(--fig, 1));
+    width: auto;
+    max-width: none;
+    translate: calc(var(--bx, 50%) * -1) 0;
     display: block;
     filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
   }
@@ -142,11 +150,12 @@
 
     img {
       position: absolute;
-      inset: 0 -8px 1px;
-      width: calc(100% + 16px);
-      height: calc(100% - 1px);
-      object-fit: contain;
-      object-position: center bottom;
+      left: 50%;
+      bottom: 1px;
+      height: calc((100% - 1px) * var(--fig, 1));
+      width: auto;
+      max-width: none;
+      translate: calc(var(--bx, 50%) * -1) 0;
       z-index: 1;
       filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5));
     }

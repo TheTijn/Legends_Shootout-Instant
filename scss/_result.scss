@@ -10,7 +10,8 @@
   z-index: 10;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease-out;
+  transition: opacity 0.25s ease-out, visibility 0s linear 0.25s;
+  @include hidden-until('.visible');
 
   &.visible {
     opacity: 1;

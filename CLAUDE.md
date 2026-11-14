@@ -69,6 +69,7 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
   - Wins still pay the normal odds, so it is a demo mode only and must be removed or disabled before certification.
   - The mode persists in `localStorage` (`legends_results_mode`), the alternation in `sessionStorage` (`legends_forced_next`). `drawRoundOutcome()` in `game.js` applies it; `pricing.js` is untouched.
   - A gold dot on the gear shows forced mode is on.
+- `?dev` shows the **Pricing model** panel (Σ in the header), where RTP and the log5 baseline can be changed live. Without the flag the button is hidden and unbound. Strip it before certification.
 - `?force=<outcome key>` overrides both modes and forces every draw, to review animations. Keys: `FTL FTR FBL FBR FFH BTL BTR BBL BBR BFH` for goals, `NG NB NP NS NM` for saves and misses. It is dev-only, so strip it or disable it before certification.
 
 ## Deploy

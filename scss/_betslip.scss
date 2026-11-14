@@ -17,7 +17,8 @@
   transform: translateX(-50%) translateY(100%);
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.3s $ease-bounce, opacity 0.2s ease;
+  transition: transform 0.3s $ease-bounce, opacity 0.2s ease, visibility 0s linear 0.3s;
+  @include hidden-until('.visible');
 
   &.visible {
     transform: translateX(-50%) translateY(0);
@@ -30,6 +31,8 @@
     .betslip-detail {
       max-height: 300px;
       overflow-y: auto;
+      visibility: visible;
+      transition-delay: 0s;
     }
   }
 
@@ -82,7 +85,8 @@
   &-detail {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    visibility: hidden;
+    transition: max-height 0.3s ease, visibility 0s linear 0.3s;
   }
 
   &-bets {
@@ -164,9 +168,10 @@
   max-height: 0;
   overflow: hidden;
   background: $bg-stake;
-  transition: max-height 0.35s $ease-bounce;
+  transition: max-height 0.35s $ease-bounce, visibility 0s linear 0.35s;
+  @include hidden-until('.open');
 
-  &.open { max-height: 320px; }
+  &.open { max-height: 340px; }
 
   &-header {
     display: flex;
@@ -220,6 +225,15 @@
   @include condensed(1rem, 700);
   color: $text-white;
   padding: 0 8px;
+}
+
+.stake-error {
+  padding: 0 16px 4px;
+  font-size: 0.8rem;
+  color: $accent-red;
+  text-align: center;
+
+  &:empty { display: none; }
 }
 
 .stake-presets {

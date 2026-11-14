@@ -12,37 +12,45 @@
 //
 // head: { x, y } is the centre of the helmet as a % of the image box, used to
 // crop circular head avatars.
+//
+// bx is the horizontal centre of the body (stick ignored) as a % of the image
+// width. Full-body figures are all drawn at one height and anchored on bx, so
+// a pose with a long stick is as prominent as a compact one. fig (optional)
+// scales one figure against that common height: goalies default to 0.92,
+// Giguère's wide butterfly and Savard's long wind-up are taken down further.
+// Re-measure bx if the art is regenerated (npm run images).
 
 const ART_PATH = 'assets/players/';
 
 const SHOOTERS = [
-  { id: 1,  name: 'Mark Messier',     file: 'Mark_Messier',     num: 11, hand: 'L', F: 0.33, accent: '#3a52a8', art: 'flipped',  head: { x: 77, y: 9 } },
-  { id: 2,  name: 'Joe Sakic',        file: 'Joe_Sakic',        num: 19, hand: 'L', F: 0.33, accent: '#9a2633', art: 'flipped',  head: { x: 55, y: 8 } },
-  { id: 3,  name: 'Steve Yzerman',    file: 'Steve_Yzerman',    num: 19, hand: 'R', F: 0.30, accent: '#c8232b', art: 'flipped',  head: { x: 71, y: 8 } },
-  { id: 4,  name: 'Ray Bourque',      file: 'Ray_Bourque',      num: 77, hand: 'L', F: 0.20, accent: '#ea9f28', art: 'series01', head: { x: 35, y: 9 } },
-  { id: 5,  name: 'Brett Hull',       file: 'Brett_Hull',       num: 16, hand: 'R', F: 0.44, accent: '#f5a800', art: 'flipped',  head: { x: 29, y: 8 } },
-  { id: 6,  name: 'Nicklas Lidstrom', file: 'Nicklas_Lidstrom', num: 5,  hand: 'L', F: 0.21, accent: '#d42f36', art: 'series01', head: { x: 58, y: 9 } },
-  { id: 7,  name: 'Teemu Selanne',    file: 'Teemu_Selanne',    num: 13, hand: 'R', F: 0.36, accent: '#2f3f9e', art: 'flipped',  head: { x: 69, y: 9 } },
-  { id: 8,  name: 'Chris Pronger',    file: 'Chris_Pronger',    num: 20, hand: 'L', F: 0.10, accent: '#e75f25', art: 'series01', head: { x: 42, y: 6 } },
-  { id: 9,  name: 'Ron Francis',      file: 'Ron_Francis',      num: 10, hand: 'L', F: 0.32, accent: '#2f6b45', art: 'series01', head: { x: 44, y: 8 } },
-  { id: 10, name: 'Bobby Clarke',     file: 'Bobby_Clarke',     num: 16, hand: 'L', F: 0.31, accent: '#e8692a', art: 'flipped',  head: { x: 68, y: 6 } },
-  { id: 11, name: 'Denis Savard',     file: 'Denis_Savard',     num: 18, hand: 'R', F: 0.33, accent: '#c41e2f', art: 'series01', head: { x: 60, y: 9 } },
-  { id: 12, name: 'Jeremy Roenick',   file: 'Jeremy_Roenick',   num: 27, hand: 'R', F: 0.31, accent: '#c8292f', art: 'flipped',  head: { x: 37, y: 10 } },
-  { id: 13, name: 'Marcel Dionne',    file: 'Marcel_Dionne',    num: 16, hand: 'R', F: 0.31, accent: '#f2c500', art: 'flipped',  head: { x: 42, y: 8 } },
-  { id: 14, name: 'Mark Recchi',      file: 'Mark_Recchi',      num: 8,  hand: 'L', F: 0.33, accent: '#e34225', art: 'series01', head: { x: 34, y: 7 } },
-  { id: 15, name: 'Luc Robitaille',   file: 'Luc_Robitaille',   num: 20, hand: 'L', F: 0.26, accent: '#a3a9b0', art: 'series01', head: { x: 56, y: 9 } },
-  { id: 16, name: 'Mats Sundin',      file: 'Mats_Sundin',      num: 13, hand: 'R', F: 0.36, accent: '#4a51a0', art: 'flipped',  head: { x: 56, y: 6 } },
+  { id: 1,  name: 'Mark Messier',     file: 'Mark_Messier',     num: 11, hand: 'L', F: 0.33, accent: '#3a52a8', art: 'flipped',  bx: 64, head: { x: 77, y: 9 } },
+  { id: 2,  name: 'Joe Sakic',        file: 'Joe_Sakic',        num: 19, hand: 'L', F: 0.33, accent: '#9a2633', art: 'flipped',  bx: 42, head: { x: 55, y: 8 } },
+  { id: 3,  name: 'Steve Yzerman',    file: 'Steve_Yzerman',    num: 19, hand: 'R', F: 0.30, accent: '#c8232b', art: 'flipped',  bx: 46, head: { x: 71, y: 8 } },
+  { id: 4,  name: 'Ray Bourque',      file: 'Ray_Bourque',      num: 77, hand: 'L', F: 0.20, accent: '#ea9f28', art: 'series01', bx: 27, head: { x: 35, y: 9 } },
+  { id: 5,  name: 'Brett Hull',       file: 'Brett_Hull',       num: 16, hand: 'R', F: 0.44, accent: '#f5a800', art: 'flipped',  bx: 34, head: { x: 29, y: 8 } },
+  { id: 6,  name: 'Nicklas Lidstrom', file: 'Nicklas_Lidstrom', num: 5,  hand: 'L', F: 0.21, accent: '#d42f36', art: 'series01', bx: 47, head: { x: 58, y: 9 } },
+  { id: 7,  name: 'Teemu Selanne',    file: 'Teemu_Selanne',    num: 13, hand: 'R', F: 0.36, accent: '#2f3f9e', art: 'flipped',  bx: 49, head: { x: 69, y: 9 } },
+  { id: 8,  name: 'Chris Pronger',    file: 'Chris_Pronger',    num: 20, hand: 'L', F: 0.10, accent: '#e75f25', art: 'series01', bx: 51, head: { x: 42, y: 6 } },
+  { id: 9,  name: 'Ron Francis',      file: 'Ron_Francis',      num: 10, hand: 'L', F: 0.32, accent: '#2f6b45', art: 'series01', bx: 38, head: { x: 44, y: 8 } },
+  { id: 10, name: 'Bobby Clarke',     file: 'Bobby_Clarke',     num: 16, hand: 'L', F: 0.31, accent: '#e8692a', art: 'flipped',  bx: 52, head: { x: 68, y: 6 } },
+  { id: 11, name: 'Denis Savard',     file: 'Denis_Savard',     num: 18, hand: 'R', F: 0.33, accent: '#c41e2f', art: 'series01', fig: 0.9, bx: 63, head: { x: 60, y: 9 } },
+  { id: 12, name: 'Jeremy Roenick',   file: 'Jeremy_Roenick',   num: 27, hand: 'R', F: 0.31, accent: '#c8292f', art: 'flipped',  bx: 37, head: { x: 37, y: 10 } },
+  { id: 13, name: 'Marcel Dionne',    file: 'Marcel_Dionne',    num: 16, hand: 'R', F: 0.31, accent: '#f2c500', art: 'flipped',  bx: 35, head: { x: 42, y: 8 } },
+  { id: 14, name: 'Mark Recchi',      file: 'Mark_Recchi',      num: 8,  hand: 'L', F: 0.33, accent: '#e34225', art: 'series01', bx: 46, head: { x: 34, y: 7 } },
+  { id: 15, name: 'Luc Robitaille',   file: 'Luc_Robitaille',   num: 20, hand: 'L', F: 0.26, accent: '#a3a9b0', art: 'series01', bx: 47, head: { x: 56, y: 9 } },
+  { id: 16, name: 'Mats Sundin',      file: 'Mats_Sundin',      num: 13, hand: 'R', F: 0.36, accent: '#4a51a0', art: 'flipped',  bx: 50, head: { x: 56, y: 6 } },
 ];
 
 // PSP (penalty save %) = 2 x CSP - 1.09, per spec.
 const GOALIES = [
-  { id: 1001, name: 'Dominik Hasek',          file: 'Dominik_Hasek',          num: 39, hand: 'R', CSP: 0.925, accent: '#1f5bc4', art: 'flipped',  head: { x: 37, y: 9 },  kit: { jersey: '#1f4aa8', trim: '#f2a900', pads: '#f4f6f8', mask: '#2a4fb8' } },
-  { id: 1002, name: 'Ed Belfour',             file: 'Ed_Belfour',             num: 30, hand: 'R', CSP: 0.912, accent: '#dc3232', art: 'flipped',  head: { x: 40, y: 10 }, kit: { jersey: '#d62f34', trim: '#151515', pads: '#f4f4f4', mask: '#f2f2f2' } },
-  { id: 1003, name: 'Grant Fuhr',             file: 'Grant_Fuhr',             num: 31, hand: 'L', CSP: 0.889, accent: '#2b47b0', art: 'series01', head: { x: 46, y: 7 },  kit: { jersey: '#2b3f9b', trim: '#e8542a', pads: '#f2efe6', mask: '#f2f2f2' } },
-  { id: 1004, name: 'Curtis Joseph',          file: 'Curtis_Joseph',          num: 31, hand: 'R', CSP: 0.905, accent: '#5a55b0', art: 'flipped',  head: { x: 40, y: 8 },  kit: { jersey: '#eef0f6', trim: '#3b3f8f', pads: '#3b3f8f', mask: '#3d42a0' } },
-  { id: 1005, name: 'Ron Hextall',            file: 'Ron_Hextall',            num: 27, hand: 'R', CSP: 0.898, accent: '#c41e2f', art: 'flipped',  head: { x: 41, y: 14 }, kit: { jersey: '#c41e2f', trim: '#1a1a1a', pads: '#f4f4f4', mask: '#f2f2f2' } },
-  { id: 1006, name: 'Jean-Sébastien Giguère', file: 'Jean-Sebastien_Giguere', num: 35, hand: 'R', CSP: 0.912, accent: '#b3a160', art: 'series01', head: { x: 56, y: 8 },  kit: { jersey: '#f0efea', trim: '#2a1a14', pads: '#f0efea', mask: '#e8e2cf' } },
-].map(g => ({ ...g, PSP: +(2 * g.CSP - 1.09).toFixed(3) }));
+  { id: 1001, name: 'Dominik Hasek',          file: 'Dominik_Hasek',          num: 39, hand: 'R', CSP: 0.925, accent: '#1f5bc4', art: 'flipped',  bx: 47, head: { x: 37, y: 9 },  kit: { jersey: '#1f4aa8', trim: '#f2a900', pads: '#f4f6f8', mask: '#2a4fb8' } },
+  { id: 1002, name: 'Ed Belfour',             file: 'Ed_Belfour',             num: 30, hand: 'R', CSP: 0.912, accent: '#dc3232', art: 'flipped',  bx: 48, head: { x: 40, y: 10 }, kit: { jersey: '#d62f34', trim: '#151515', pads: '#f4f4f4', mask: '#f2f2f2' } },
+  { id: 1003, name: 'Grant Fuhr',             file: 'Grant_Fuhr',             num: 31, hand: 'L', CSP: 0.889, accent: '#2b47b0', art: 'series01', bx: 46, head: { x: 46, y: 7 },  kit: { jersey: '#2b3f9b', trim: '#e8542a', pads: '#f2efe6', mask: '#f2f2f2' } },
+  { id: 1004, name: 'Curtis Joseph',          file: 'Curtis_Joseph',          num: 31, hand: 'R', CSP: 0.905, accent: '#5a55b0', art: 'flipped',  bx: 50, head: { x: 40, y: 8 },  kit: { jersey: '#eef0f6', trim: '#3b3f8f', pads: '#3b3f8f', mask: '#3d42a0' } },
+  { id: 1005, name: 'Ron Hextall',            file: 'Ron_Hextall',            num: 27, hand: 'R', CSP: 0.898, accent: '#c41e2f', art: 'flipped',  bx: 54, head: { x: 41, y: 14 }, kit: { jersey: '#c41e2f', trim: '#1a1a1a', pads: '#f4f4f4', mask: '#f2f2f2' } },
+  { id: 1006, name: 'Jean-Sébastien Giguère', file: 'Jean-Sebastien_Giguere', num: 35, hand: 'R', CSP: 0.912, accent: '#b3a160', art: 'series01', fig: 0.82, bx: 51, head: { x: 56, y: 8 },  kit: { jersey: '#f0efea', trim: '#2a1a14', pads: '#f0efea', mask: '#e8e2cf' } },
+// Goalies crouch and are bulkier, so they are drawn a little smaller than the skaters.
+].map(g => ({ fig: 0.92, ...g, PSP: +(2 * g.CSP - 1.09).toFixed(3) }));
 
 const LABELS = {
   shot: { F: 'Forehand', B: 'Backhand' },

@@ -15,6 +15,8 @@ const MULTI_MARKETS = ['SSL', 'STL', 'GST']; // multi-select up to N-1
 const HISTORY_KEY = 'legends_history';
 const BALANCE_KEY = 'legends_balance';
 const AUTO_NEXT_DELAY = 2600;
+const MIN_STAKE = 0.1;
+const MAX_STAKE = 10000;
 
 const state = {
   balance: 1000,
@@ -52,6 +54,10 @@ const store = {
 // builds that strip query strings.
 const FORCED = new URLSearchParams(location.search).get('force');
 
+// Dev hook: ?dev shows the pricing model panel (the sigma button in the header).
+// Without it the button stays hidden and unbound, so players can't reprice the book.
+const DEV = new URLSearchParams(location.search).has('dev');
+
 // Results mode (Settings menu): 'maths' draws every shot from the priced
 // distribution; 'forced' is a demo mode where rounds alternate goal / save.
 // The mode persists per browser, the alternation per session.
@@ -71,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedBalance = store.get(BALANCE_KEY, null);
   if (typeof savedBalance === 'number' && savedBalance >= 0) state.balance = savedBalance;
 
+  if (DEV) $('#btnMaths').hidden = false;
   buildComboGrid();
   state.shooterIdx = randInt(SHOOTERS.length);
   state.goalieIdx = randInt(GOALIES.length);
@@ -103,9 +110,13 @@ function imgTag(p, hi = false) {
   return `<img src="${src}"${srcset} alt="${p.name}" decoding="async" draggable="false">`;
 }
 
+// Every figure is drawn at the same height and anchored on the centre of the
+// body (bx), not the image, so a long stick doesn't shrink or shift the player.
+const figVars = (p) => `--bx:${p.bx}%;--fig:${p.fig || 1}`;
+
 // Full-body cut-out (face-off stage, intro, result hero)
 function playerHTML(p, { hi = false, num = true } = {}) {
-  return `<span class="lg-player" style="--accent:${p.accent}">
+  return `<span class="lg-player" style="--accent:${p.accent};${figVars(p)}">
     <span class="lg-player-glow"></span>
     ${num ? `<span class="lg-player-num" aria-hidden="true">${p.num}</span>` : ''}
     <span class="lg-player-shadow"></span>
@@ -116,7 +127,7 @@ function playerHTML(p, { hi = false, num = true } = {}) {
 // Small full-body figure with the name beneath (in-game bar, result bar, banner)
 function miniHTML(p, role = null) {
   const text = role ? `<span class="lg-mini-text"><span class="lg-mini-name">${p.name}</span><span class="lg-mini-role">${role}</span></span>` : '';
-  return `<span class="lg-mini" style="--accent:${p.accent}">
+  return `<span class="lg-mini" style="--accent:${p.accent};${figVars(p)}">
     <span class="lg-mini-fig"><span class="lg-mini-glow"></span>${imgTag(p)}<span class="lg-player-initials">${initialsOf(p)}</span></span>${text}
   </span>`;
 }
@@ -324,6 +335,7 @@ function closeSelector() {
 
 function pickPlayer(i) {
   const role = state.selectorRole;
+  if (!role || state.isPlaying) return; // the selector is closed
   if (role === 'shooter') state.shooterIdx = i; else state.goalieIdx = i;
   closeSelector();
   loadMatch({ keepBets: true });
@@ -344,7 +356,11 @@ function handleBetToggle(btn) {
   } else {
     if (MULTI_MARKETS.includes(market)) {
       const n = SELECTIONS[market].length;
-      if (state.bets.filter(b => b.market === market).length >= n - 1) return; // N-1 rule
+      if (state.bets.filter(b => b.market === market).length >= n - 1) { // N-1 rule
+        shake(btn);
+        toast(`You can pick up to ${n - 1} of the ${n} ${MARKETS[market].name} selections.`);
+        return;
+      }
     } else {
       state.bets = state.bets.filter(b => b.market !== market); // single pick
     }
@@ -380,10 +396,18 @@ function describeOutcome(o, s, g, variant) {
 }
 
 // ===== BETSLIP =====
+// The most the slip can return: the best single outcome, since bets on
+// different outcomes (a goal and a save type, two target areas) can't all win.
+function maxPayout() {
+  if (!state.bets.length) return 0;
+  return Math.max(...state.priced.outcomes.map(o =>
+    state.bets.reduce((sum, b) => sum + (selectionWins(b.market, b.selection, o) ? b.odds * state.stake : 0), 0)));
+}
+
 function updateBetslip() {
   const count = state.bets.length;
   const totalStake = count * state.stake;
-  const maxPay = state.bets.reduce((sum, b) => sum + b.odds * state.stake, 0);
+  const maxPay = maxPayout();
 
   $('#betCount').textContent = `${count} BET${count !== 1 ? 'S' : ''}`;
   $('#betTotalStake').textContent = `$${+totalStake.toFixed(2)} TOTAL STAKE`;
@@ -441,10 +465,10 @@ function drawAlternating() {
 
 // Takes the stake and draws the outcome. Returns the round, or null if it can't be played.
 function startRound() {
-  const cost = state.bets.length * state.stake;
+  const cost = toCents(state.bets.length * state.stake);
   if (!state.bets.length || cost > state.balance) return null;
   state.isPlaying = true;
-  state.balance -= cost;
+  state.balance = toCents(state.balance - cost);
   updateBalance();
   closeSelector();
   $('#stakePanel').classList.remove('open');
@@ -463,15 +487,31 @@ function startRound() {
 function playGame() {
   if (state.isPlaying || state.autoplay.active) return;
   const round = startRound();
-  if (!round) { shakePlay(); return; }
+  if (!round) {
+    shake($('#btnPlay'));
+    const cost = toCents(state.bets.length * state.stake);
+    if (state.bets.length && cost > state.balance) toast(`Not enough balance: this slip costs ${money(cost)} and you have ${money(state.balance)}.`);
+    return;
+  }
   $('#btnPlay').disabled = true;
   $('#btnPlay').textContent = 'PLAYING...';
   showInGame(round);
 }
 
-function shakePlay() {
-  const b = $('#btnPlay');
-  b.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 240 });
+function shake(el) {
+  if (reduceMotion()) return;
+  el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 240 });
+}
+
+// Short message under the header (limits, balance)
+let toastTimer = null;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.remove('visible'); void el.offsetWidth;
+  el.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('visible'), 3600);
 }
 
 // ===== IN-GAME =====
@@ -578,13 +618,14 @@ function revealOutcome(round, { silent = false } = {}) {
 function creditPayout(round) {
   if (round.credited) return;
   round.credited = true;
-  state.balance += round.payout;
-  updateBalance(round.payout > 0);
+  state.balance = toCents(state.balance + round.payout);
+  updateBalance(isNetWin(round));
 }
 
 function skipIngame() {
   clearTimeout(finishTimer);
   clearTimeout(revealTimer);
+  clearTimeout(outcomeSoundTimer); // no horn over the result screen
   Intro.reset();
   ShotClip.stop();
   finishIngame();
@@ -638,23 +679,31 @@ function showResult(round) {
   const { outcome, results, payout } = round;
   setView('result');
 
-  const won = payout > 0;
+  // Only a return above the total stake is a win. A smaller return is shown
+  // plainly, without the celebration.
+  const won = isNetWin(round);
+  const partial = payout > 0 && !won;
   const d = describeOutcome(outcome, round.shooter, round.goalie, round.variant);
   const heroIsShooter = outcome.goal || outcome.save === 'M';
   const hero = heroIsShooter ? round.shooter : round.goalie;
 
   const heroEl = $('#resHero');
   heroEl.classList.toggle('win', won);
-  heroEl.classList.toggle('loss', !won);
+  heroEl.classList.toggle('partial', partial);
+  heroEl.classList.toggle('loss', !won && !partial);
   heroEl.classList.toggle('side-l', heroIsShooter);
   heroEl.classList.toggle('side-r', !heroIsShooter);
   heroEl.style.setProperty('--accent', hero.accent);
   $('#resHeroPlayer').innerHTML = playerHTML(hero, { hi: true });
 
   $('#resEyebrow').textContent = won ? 'CONGRATULATIONS!' : `${d.what.toUpperCase()} · ${lastName(hero).toUpperCase()}`;
-  $('#resHeadline').textContent = won ? 'YOU WIN' : 'BETTER LUCK\nNEXT SHOT';
-  $('#resHeadline').style.whiteSpace = won ? '' : 'pre-line';
-  if (won) animateResAmount(payout); else { cancelResAmountAnimation(); $('#resAmount').textContent = ''; }
+  $('#resHeadline').textContent = won ? 'YOU WIN' : partial ? 'RETURNED' : 'BETTER LUCK\nNEXT SHOT';
+  $('#resHeadline').style.whiteSpace = won || partial ? '' : 'pre-line';
+  if (won) animateResAmount(payout);
+  else {
+    cancelResAmountAnimation();
+    $('#resAmount').textContent = partial ? `${money(payout)} of ${money(round.cost)} staked` : '';
+  }
 
   // restart entrance animations
   const overlay = $('#resultOverlay');
@@ -669,7 +718,7 @@ function showResult(round) {
       ResultFx.burst({ x, y: hr.top - or.top + hr.height * 0.55, colors: [hero.accent, '#ffffff', '#22c55e', '#f5a623', '#80e8df'] });
     });
   } else {
-    Sfx.play('lose');
+    Sfx.play(partial ? 'tick' : 'lose');
   }
 
   $('#resShooterThumb').innerHTML = miniHTML(round.shooter, 'Shooter');
@@ -682,7 +731,8 @@ function showResult(round) {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  $('#resBetslip').innerHTML = results.map((r, i) => `
+  const winnersFirst = [...results].sort((a, b) => b.win - a.win); // stable: slip order kept within each group
+  $('#resBetslip').innerHTML = winnersFirst.map((r, i) => `
     <div class="res-bet-card ${r.win ? 'win' : ''}" style="--i:${i}">
       <div class="res-bet-info">
         <span class="res-bet-placed-label">Bet placed</span>
@@ -939,13 +989,19 @@ function updateAutoChip() {
 }
 
 // ===== STAKE =====
+const toCents = (n) => Math.round(n * 100) / 100;
+const isNetWin = (round) => round.payout > round.cost + 0.005;
+
+// Returns false (and leaves the stake alone) if the amount is out of range
 function setStake(v) {
-  const n = parseFloat(v);
-  if (!isNaN(n) && n > 0 && n <= 10000) {
-    state.stake = n; state.stakeInput = String(n);
-    updateStakeDisplay(); updateBetslip();
-  }
+  const n = toCents(parseFloat(v));
+  if (isNaN(n) || n < MIN_STAKE || n > MAX_STAKE) return false;
+  state.stake = n; state.stakeInput = String(n);
+  stakeError('');
+  updateStakeDisplay(); updateBetslip();
+  return true;
 }
+function stakeError(msg) { $('#stakeError').textContent = msg; }
 function updateStakeDisplay() {
   const d = state.stakeInput || '0';
   $('#stakeInputValue').textContent = `$${d}`;
@@ -954,15 +1010,17 @@ function updateStakeDisplay() {
 function handleNumpadKey(key) {
   Sfx.play('tick');
   if (key === 'confirm') {
-    const n = parseFloat(state.stakeInput);
-    if (!isNaN(n) && n > 0) setStake(n);
-    $('#stakePanel').classList.remove('open');
+    if (setStake(state.stakeInput)) { $('#stakePanel').classList.remove('open'); return; }
+    stakeError(`Enter a stake from ${money(MIN_STAKE)} to ${money(MAX_STAKE)}.`);
+    shake($('#stakeInputValue'));
     return;
   }
+  stakeError('');
   if (key === 'backspace') { state.stakeInput = state.stakeInput.slice(0, -1); updateStakeDisplay(); return; }
   if (key === '.' && state.stakeInput.includes('.')) return;
-  if (state.stakeInput.length >= 7) return;
-  state.stakeInput += key;
+  if (/\.\d\d$/.test(state.stakeInput)) return; // cents only
+  if (state.stakeInput.length >= 8) return;
+  state.stakeInput += key === '.' && !state.stakeInput ? '0.' : key;
   updateStakeDisplay();
 }
 function adjustStake(delta) { setStake(Math.max(1, (parseFloat(state.stakeInput) || 0) + delta)); Sfx.play('tick'); }
@@ -1026,7 +1084,7 @@ function bindEvents() {
   $('#betslipSummary').addEventListener('click', () => { $('#betslip').classList.toggle('expanded'); Sfx.play('tick'); });
   $('#btnPlay').addEventListener('click', playGame);
   $('#btnAuto').addEventListener('click', () => { if (!state.isPlaying) { updateAutoplayDisplay(); $('#autoplayOverlay').classList.add('visible'); Sfx.play('tick'); } });
-  $('#btnStake').addEventListener('click', () => { state.stakeInput = String(state.stake); updateStakeDisplay(); $('#stakePanel').classList.add('open'); Sfx.play('tick'); });
+  $('#btnStake').addEventListener('click', () => { state.stakeInput = String(state.stake); stakeError(''); updateStakeDisplay(); $('#stakePanel').classList.add('open'); Sfx.play('tick'); });
 
   $('#autoplayClose').addEventListener('click', () => $('#autoplayOverlay').classList.remove('visible'));
   $('#autoplayOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('visible'); });
@@ -1056,7 +1114,7 @@ function bindEvents() {
   $('#btnSettings').addEventListener('click', () => toggleSettings());
   $$('#settingsMenu [data-mode]').forEach(b => b.addEventListener('click', () => setResultsMode(b.dataset.mode)));
   document.addEventListener('click', (e) => { if (!e.target.closest('.lg-settings')) toggleSettings(false); });
-  $('#btnMaths').addEventListener('click', () => { renderMaths(); openOverlay('#mathsOverlay', '#btnMathsClose'); });
+  if (DEV) $('#btnMaths').addEventListener('click', () => { renderMaths(); openOverlay('#mathsOverlay', '#btnMathsClose'); });
   $('#btnMathsClose').addEventListener('click', () => closeOverlay('#mathsOverlay'));
   $('#mathsOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeOverlay('#mathsOverlay'); });
 

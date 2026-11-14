@@ -216,7 +216,8 @@
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -8px);
-  transition: opacity 0.25s ease, transform 0.35s $ease-bounce;
+  transition: opacity 0.25s ease, transform 0.35s $ease-bounce, visibility 0s linear 0.35s;
+  @include hidden-until('.visible');
 
   &.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 

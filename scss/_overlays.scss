@@ -9,7 +9,8 @@
   background: rgba(0, 0, 0, 0.6);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+  @include hidden-until('.visible');
 
   &.visible {
     opacity: 1;
@@ -159,7 +160,8 @@
   background: rgba(0, 0, 0, 0.6);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+  @include hidden-until('.visible');
 
   &.visible {
     opacity: 1;
