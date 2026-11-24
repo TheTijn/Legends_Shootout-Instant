@@ -122,8 +122,9 @@ input:focus-visible {
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 
+  // clear of the collapsed phone betslip (--slip-h is measured in game.js)
   &.has-bets {
-    padding-bottom: 140px;
+    padding-bottom: calc(var(--slip-h, 128px) + 16px);
   }
 
   @media (min-height: 800px) {
@@ -150,7 +151,7 @@ input:focus-visible {
   }
 
   .betslip {
-    border-radius: 0 0 10px 10px;
+    border-radius: 20px 20px 10px 10px;
   }
 }
 

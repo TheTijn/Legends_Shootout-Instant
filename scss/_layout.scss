@@ -45,7 +45,8 @@ $desk-gutter: 24px;
     .lg-faceoff,
     .lg-selector,
     .markets-section,
-    .betslip { display: none; }
+    .betslip,
+    .slip-scrim { display: none; }
   }
 }
 
@@ -265,6 +266,7 @@ $desk-gutter: 24px;
   .result-overlay { border-left: 0; }
   .res-hero .res-headline { font-size: 2.3rem; }
 
+  // Betslip: docked at the bottom of the column and always open
   .betslip,
   .betslip.visible {
     position: relative;
@@ -272,13 +274,36 @@ $desk-gutter: 24px;
     bottom: auto !important;
     width: 100%;
     max-width: none;
+    padding-bottom: 0;
     transform: none;
     opacity: 1;
     visibility: visible;
     pointer-events: all;
+    border: 0;
+    border-top: 1px solid $border-hover;
     border-radius: 0 0 14px 0;
     flex-shrink: 0;
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    transition: none;
+  }
+  // the bar collapses / expands the panel here too (toggleSlip() in game.js)
+  .slip-bar { padding: 10px 14px 4px; }
+  .slip-bar:hover .slip-chev { color: $text-white; }
+  .slip-grip,
+  .slip-scrim { display: none; }
+  .slip-panel-inner { max-height: min(32vh, 300px); } // tickets scroll; the markets above keep their room
+  // the column is only ~340px wide on small laptops: keep the max return whole
+  .slip-foot { padding: 8px 12px 12px 14px; }
+  .slip-ret-value { font-size: clamp(1.4rem, 2.1vw, 1.75rem); }
+  .btn-play { min-width: 124px; padding: 0 14px; }
+  // with no bets only the bar and the foot show
+  .betslip.is-empty {
+    .slip-stake,
+    .tickets,
+    .slip-clear,
+    .slip-cost,
+    .slip-chev { display: none; }
+    .slip-bar { cursor: default; }
   }
 
   // Auto Play chip sits over the viewer

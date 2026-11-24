@@ -1,6 +1,6 @@
 // ===== LEGENDS SHOOTOUT INSTANT — GAME LOGIC =====
-// Shell (betslip, stake pad, Auto Play, history, result overlay) carried over
-// from iHockey game.js. Match/market/settlement logic is for a single penalty
+// Shell (Auto Play, history, result overlay) carried over from iHockey game.js;
+// the betslip follows Instant Racing (per-bet stakes, stake chips, steppers). Match/market/settlement logic is for a single penalty
 // shot resolved by drawOutcome() in pricing.js.
 //
 // Round flow: playGame/runAutoplayRound -> startRound (stake + RNG draw)
@@ -9,7 +9,6 @@
 //   Clips are cut before the puck reaches the net, so the footage never
 //   contradicts the result. If a clip can't play, the reveal runs over its poster.
 
-const PLAY_BTN_HTML = 'PLAY <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
 const SCORE_MARKETS = ['SST', 'SSL', 'STL'];
 const MULTI_MARKETS = ['SSL', 'STL', 'GST']; // multi-select up to N-1
 const HISTORY_KEY = 'legends_history';
@@ -17,18 +16,20 @@ const BALANCE_KEY = 'legends_balance';
 const AUTO_NEXT_DELAY = 2600;
 const MIN_STAKE = 0.1;
 const MAX_STAKE = 10000;
+const STAKE_CHIPS = [1, 2, 5, 10, 25, 50]; // the betslip's chips; the ticket steppers walk them too
 
 const state = {
   balance: 1000,
-  stake: 1,
-  bets: [],
+  stake: 1,             // stake for new bets: the last chip (or Other) picked
+  bets: [],             // { market, selection, odds, label, description, stake }
   shooterIdx: 0,
   goalieIdx: 0,
   priced: null,          // { pGoal, outcomes, book }
   params: { ...PRICING },
   isPlaying: false,
   selectorRole: null,
-  stakeInput: '1',
+  slipOpen: false,      // phone bottom sheet expanded
+  deskOpen: true,       // desktop betslip expanded (remembered for the session)
   tab: 'score',
   history: [],
   round: null,           // the round in progress / last settled
@@ -76,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   state.history = store.get(HISTORY_KEY, []);
   const savedBalance = store.get(BALANCE_KEY, null);
   if (typeof savedBalance === 'number' && savedBalance >= 0) state.balance = savedBalance;
+  state.deskOpen = store.get(SLIP_KEY, true) !== false;
 
   if (DEV) $('#btnMaths').hidden = false;
   buildComboGrid();
@@ -364,8 +366,9 @@ function handleBetToggle(btn) {
     } else {
       state.bets = state.bets.filter(b => b.market !== market); // single pick
     }
-    state.bets.push({ market, selection, odds: oddsOf(market, selection), label: getBetLabel(market, selection), description: MARKETS[market].name });
+    state.bets.push({ market, selection, odds: oddsOf(market, selection), label: getBetLabel(market, selection), description: MARKETS[market].name, stake: state.stake });
     Sfx.play('select');
+    popSlip();
   }
   syncSelections();
   updateBetslip();
@@ -385,7 +388,7 @@ function getBetLabel(m, sel) {
 function evaluateBets(outcome) {
   return state.bets.map(bet => {
     const win = selectionWins(bet.market, bet.selection, outcome);
-    return { ...bet, win, payout: win ? bet.odds * state.stake : 0 };
+    return { ...bet, win, payout: win ? toCents(bet.odds * bet.stake) : 0 };
   });
 }
 
@@ -396,51 +399,146 @@ function describeOutcome(o, s, g, variant) {
 }
 
 // ===== BETSLIP =====
+// Layout and stake system from Instant Racing: per-bet stakes, a "Stake per
+// bet" chip row that sets them all, a − / + stepper per ticket, max return and
+// Place bet. A bottom sheet on phones; docked and always open on desktop.
+const slipCost = () => toCents(state.bets.reduce((sum, b) => sum + b.stake, 0));
+
 // The most the slip can return: the best single outcome, since bets on
 // different outcomes (a goal and a save type, two target areas) can't all win.
 function maxPayout() {
   if (!state.bets.length) return 0;
   return Math.max(...state.priced.outcomes.map(o =>
-    state.bets.reduce((sum, b) => sum + (selectionWins(b.market, b.selection, o) ? b.odds * state.stake : 0), 0)));
+    state.bets.reduce((sum, b) => sum + (selectionWins(b.market, b.selection, o) ? b.odds * b.stake : 0), 0)));
+}
+
+// A typed stake, clamped to the allowed range (null when it isn't a number)
+function readStake(raw) {
+  const n = parseFloat(String(raw).replace(/[$,\s]/g, ''));
+  if (!Number.isFinite(n)) return null;
+  const v = toCents(Math.min(MAX_STAKE, Math.max(MIN_STAKE, n)));
+  if (v !== toCents(n)) toast(n > MAX_STAKE ? `The maximum stake is ${money(MAX_STAKE)}.` : `The minimum stake is ${money(MIN_STAKE)}.`);
+  return v;
+}
+
+// The ticket stepper's next stake: one chip up or down (1, 2, 5, 10, 25, 50),
+// then in steps of the top chip (100, 150, ...) up to the max. A typed stake
+// moves to the nearest chip that way. Null at either end.
+function stepStake(stake, dir) {
+  const top = STAKE_CHIPS[STAKE_CHIPS.length - 1], eps = 1e-9;
+  if (dir > 0) {
+    if (stake >= MAX_STAKE - eps) return null;
+    const next = STAKE_CHIPS.find(c => c > stake + eps) ?? (Math.floor(stake / top + eps) + 1) * top;
+    return Math.min(MAX_STAKE, next);
+  }
+  if (stake > top + eps) return Math.max(top, (Math.ceil(stake / top - eps) - 1) * top);
+  return [...STAKE_CHIPS].reverse().find(c => c < stake - eps) ?? null;
+}
+
+function setAllStakes(v) {
+  state.stake = v;
+  state.bets.forEach(b => { b.stake = v; });
+  Sfx.play('tick');
+  updateBetslip();
 }
 
 function updateBetslip() {
   const count = state.bets.length;
-  const totalStake = count * state.stake;
-  const maxPay = maxPayout();
+  const cost = slipCost();
 
-  $('#betCount').textContent = `${count} BET${count !== 1 ? 'S' : ''}`;
-  $('#betTotalStake').textContent = `$${+totalStake.toFixed(2)} TOTAL STAKE`;
-  $('#betMaxPay').textContent = `$${maxPay.toFixed(2)}`;
-  $('#stakeDisplay').textContent = `$${state.stake}`;
+  $('#betCount').textContent = count;
+  $('#betTotal').textContent = money(cost);
+  $('#betMaxPay').textContent = money(maxPayout());
+  if (!state.isPlaying && !state.autoplay.active) $('#btnPlayAmt').textContent = money(cost);
   $('#btnPlay').disabled = count === 0 || state.autoplay.active;
-  $('#betslip').classList.toggle('visible', count > 0);
+
+  const slip = $('#betslip');
+  slip.classList.toggle('visible', count > 0);
+  slip.classList.toggle('is-empty', count === 0);
   $('#mainContent').classList.toggle('has-bets', count > 0);
+
+  // a chip is lit when every bet on the slip uses its stake
+  const allSame = count > 0 && state.bets.every(b => b.stake === state.stake);
+  $$('.stake-chip').forEach(c => {
+    const on = allSame && +c.dataset.amount === state.stake;
+    c.classList.toggle('active', on);
+    c.setAttribute('aria-pressed', on);
+  });
+
+  renderTickets();
+  applySlip();
   positionBetslip();
-
-  $('#betslipBets').innerHTML = state.bets.map((bet, i) => `
-    <div class="bet-item">
-      <div class="bet-item-info">
-        <span class="bet-item-market">${bet.description}</span>
-        <span class="bet-item-selection">${bet.label}</span>
-      </div>
-      <div class="bet-item-right">
-        <div>
-          <div class="bet-item-odds">${bet.odds.toFixed(2)}</div>
-          <div class="bet-item-pay">Pay: $${(bet.odds * state.stake).toFixed(2)}</div>
-        </div>
-        <button type="button" class="bet-item-remove" data-bet-index="${i}" aria-label="Remove bet">×</button>
-      </div>
-    </div>`).join('');
-
-  $$('.bet-item-remove').forEach(btn => btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    state.bets.splice(+btn.dataset.betIndex, 1);
-    Sfx.play('deselect');
-    syncSelections();
-    updateBetslip();
-  }));
 }
+
+function renderTickets() {
+  const list = $('#betslipBets');
+  // keep keyboard focus on the same control across the re-render
+  const a = document.activeElement;
+  const keep = a && list.contains(a) ? { act: a.dataset.act, i: +a.dataset.i } : null;
+
+  list.innerHTML = state.bets.map((b, i) => {
+    const down = stepStake(b.stake, -1), up = stepStake(b.stake, 1);
+    return `
+    <li class="ticket">
+      <span class="ticket-type">${b.description}</span>
+      <span class="ticket-odds">${b.odds.toFixed(2)}</span>
+      <span class="ticket-sel">${b.label}</span>
+      <div class="ticket-foot">
+        <div class="ticket-stake">Stake
+          <span class="ticket-stepper">
+            <button type="button" class="ticket-step" data-act="dec" data-i="${i}" aria-label="Lower stake for ${b.label}"${down == null ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <input type="text" inputmode="decimal" autocomplete="off" data-act="stake" data-i="${i}" value="${b.stake.toFixed(2)}" aria-label="Stake for ${b.label}">
+            <button type="button" class="ticket-step" data-act="inc" data-i="${i}" aria-label="Raise stake for ${b.label}"${up == null ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          </span>
+        </div>
+        <span>Pays: <b>${money(b.odds * b.stake)}</b></span>
+      </div>
+      <button type="button" class="ticket-rm" data-act="rm" data-i="${i}" aria-label="Remove ${b.description}: ${b.label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </li>`;
+  }).join('');
+
+  if (keep) {
+    const i = Math.min(keep.i, state.bets.length - 1);
+    const el = list.querySelector(`[data-act="${keep.act}"][data-i="${i}"]`);
+    if (el && !el.disabled) el.focus();
+    else if (!state.bets.length) $('#btnAuto').focus();
+  }
+}
+
+// Expanded / collapsed. Tapping the bar toggles it on every layout.
+// Phones: a bottom sheet over a scrim, collapsed by default and after each
+// round (state.slipOpen). Desktop: docked in the bets column, expanded by
+// default; a collapse is remembered for the session (state.deskOpen).
+const SLIP_KEY = 'legends_slip_open';
+function applySlip() {
+  const desk = isDesktop(), has = state.bets.length > 0;
+  if (!has) state.slipOpen = false;
+  const open = has && (desk ? state.deskOpen : state.slipOpen);
+  $('#betslip').classList.toggle('open', open);
+  $('#slipBar').setAttribute('aria-expanded', open);
+  $('#slipScrim').classList.toggle('visible', open && !desk);
+  if (!open && $('#slipPanel').contains(document.activeElement)) $('#slipBar').focus();
+}
+// The phone sheet (closing it never collapses the desktop slip)
+function setSlipOpen(open) { state.slipOpen = !!open; applySlip(); }
+function toggleSlip() {
+  if (!state.bets.length) return;
+  if (isDesktop()) { state.deskOpen = !state.deskOpen; store.set(SLIP_KEY, state.deskOpen); }
+  else state.slipOpen = !state.slipOpen;
+  applySlip();
+  Sfx.play('tick');
+}
+
+// The count and max return pop when a bet is added
+function popSlip() {
+  if (reduceMotion()) return;
+  for (const id of ['#betCount', '#betMaxPay']) {
+    const el = $(id);
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  }
+}
+
+const setPlayLabel = (text) => { $('#btnPlay .btn-play-label').textContent = text; };
 
 // ===== ROUND =====
 function drawRoundOutcome() {
@@ -465,13 +563,13 @@ function drawAlternating() {
 
 // Takes the stake and draws the outcome. Returns the round, or null if it can't be played.
 function startRound() {
-  const cost = toCents(state.bets.length * state.stake);
+  const cost = slipCost();
   if (!state.bets.length || cost > state.balance) return null;
   state.isPlaying = true;
   state.balance = toCents(state.balance - cost);
   updateBalance();
   closeSelector();
-  $('#stakePanel').classList.remove('open');
+  setSlipOpen(false);
 
   const outcome = drawRoundOutcome();
   const results = evaluateBets(outcome);
@@ -479,7 +577,7 @@ function startRound() {
     id: `${1000000 + randInt(9000000)}`,
     outcome, results, cost, variant: null,
     payout: results.reduce((sum, r) => sum + r.payout, 0),
-    shooter: shooter(), goalie: goalie(), stake: state.stake, credited: false,
+    shooter: shooter(), goalie: goalie(), credited: false,
   };
   return state.round;
 }
@@ -489,12 +587,12 @@ function playGame() {
   const round = startRound();
   if (!round) {
     shake($('#btnPlay'));
-    const cost = toCents(state.bets.length * state.stake);
+    const cost = slipCost();
     if (state.bets.length && cost > state.balance) toast(`Not enough balance: this slip costs ${money(cost)} and you have ${money(state.balance)}.`);
     return;
   }
   $('#btnPlay').disabled = true;
-  $('#btnPlay').textContent = 'PLAYING...';
+  setPlayLabel('Playing…');
   showInGame(round);
 }
 
@@ -532,7 +630,7 @@ function showInGame(round) {
       <div class="res-bet-info">
         <span class="res-bet-placed-label">Bet placed</span>
         <span class="res-bet-type">${bet.description}: ${bet.label}</span>
-        <span class="res-bet-stake">Stake: $${round.stake.toFixed(2)}</span>
+        <span class="res-bet-stake">Stake: ${money(bet.stake)}</span>
       </div>
       <div class="res-bet-outcome"><span class="res-bet-odds">${bet.odds.toFixed(2)}</span></div>
     </div>`).join('');
@@ -737,7 +835,7 @@ function showResult(round) {
       <div class="res-bet-info">
         <span class="res-bet-placed-label">Bet placed</span>
         <span class="res-bet-type">${r.description}: ${r.label}</span>
-        <span class="res-bet-stake">${dateStr}, ${timeStr} &nbsp;·&nbsp; Stake: $${round.stake.toFixed(2)}</span>
+        <span class="res-bet-stake">${dateStr}, ${timeStr} &nbsp;·&nbsp; Stake: ${money(r.stake)}</span>
       </div>
       <div class="res-bet-outcome">
         <span class="res-bet-odds">${r.odds.toFixed(2)}</span>
@@ -758,8 +856,8 @@ function saveToHistory(round) {
     time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
     shooterId: round.shooter.id, goalieId: round.goalie.id,
     shooter: round.shooter.name, goalie: round.goalie.name, outcome: d,
-    bets: round.results.map(r => ({ description: r.description, label: r.label, odds: r.odds, win: r.win, payout: r.payout })),
-    stake: round.stake, totalPayout: round.payout,
+    bets: round.results.map(r => ({ description: r.description, label: r.label, odds: r.odds, stake: r.stake, win: r.win, payout: r.payout })),
+    cost: round.cost, totalPayout: round.payout,
   });
   if (state.history.length > 50) state.history.pop();
   store.set(HISTORY_KEY, state.history);
@@ -797,7 +895,7 @@ function renderHistory() {
             <span class="history-bet-result-badge ${b.win ? 'win' : 'lost'}">${b.win ? '+$' + b.payout.toFixed(2) : 'No Win'}</span>
           </div>`).join('')}
         <div class="history-entry-footer">
-          <span class="history-stake">Stake: $${(e.stake * e.bets.length).toFixed(2)}</span>
+          <span class="history-stake">Stake: ${money(e.cost ?? e.stake * e.bets.length)}</span>
           <span class="history-payout ${hasWin ? 'won' : ''}">${hasWin ? 'Return: $' + e.totalPayout.toFixed(2) : 'No Return'}</span>
         </div>
       </div>`;
@@ -897,7 +995,7 @@ function autoBet() {
     const open = SELECTIONS[m].filter(s => !isSuspended(m, s));
     if (!open.length) continue;
     const sel = open[randInt(open.length)];
-    state.bets.push({ market: m, selection: sel, odds: oddsOf(m, sel), label: getBetLabel(m, sel), description: MARKETS[m].name });
+    state.bets.push({ market: m, selection: sel, odds: oddsOf(m, sel), label: getBetLabel(m, sel), description: MARKETS[m].name, stake: state.stake });
   }
   syncSelections();
   updateBetslip();
@@ -905,7 +1003,7 @@ function autoBet() {
 
 function updateAutoplayDisplay() {
   const ap = state.autoplay;
-  $('#autoplayStakeVal').textContent = state.stake;
+  $('#autoplayStakeVal').textContent = money(state.stake);
   $('#autoplayTotalRisk').textContent = (state.stake * ap.rounds).toFixed(0);
   $$('.autoplay-round-btn').forEach(b => b.classList.toggle('active', +b.dataset.rounds === ap.rounds));
   $('#lossLimitInput').value = ap.lossLimit;
@@ -929,7 +1027,8 @@ function runAutoplayRound() {
   autoBet();
   const round = startRound();
   if (!round) { stopAutoplay(); return; }
-  $('#btnPlay').textContent = `AUTO ${ap.roundsLeft}`;
+  setPlayLabel(`Auto · ${ap.roundsLeft}`);
+  $('#btnPlayAmt').textContent = money(round.cost);
 
   if (!ap.skipResults) { showInGame(round); return; }
 
@@ -955,7 +1054,7 @@ function afterAutoplayRound(round, { quiet = false } = {}) {
   if (!ap.active) return false;
   ap.net += round.payout - round.cost;
   ap.roundsLeft--;
-  const hitWin = ap.winLimit === '10x' && round.payout >= state.stake * 10;
+  const hitWin = ap.winLimit === '10x' && round.payout >= round.cost * 10;
   const hitLoss = -ap.net >= ap.lossLimit;
   if (hitWin || hitLoss || ap.roundsLeft <= 0 || state.balance < state.stake) { stopAutoplay(); return false; }
   updateAutoChip();
@@ -976,7 +1075,7 @@ function stopAutoplay() {
   clearTimeout(ap.timer);
   Object.assign(ap, { active: false, roundsLeft: 0 });
   document.body.classList.remove('simulating');
-  $('#btnPlay').innerHTML = PLAY_BTN_HTML;
+  setPlayLabel('Place bet');
   updateBetslip();
   updateAutoChip();
 }
@@ -992,43 +1091,17 @@ function updateAutoChip() {
 const toCents = (n) => Math.round(n * 100) / 100;
 const isNetWin = (round) => round.payout > round.cost + 0.005;
 
-// Returns false (and leaves the stake alone) if the amount is out of range
-function setStake(v) {
-  const n = toCents(parseFloat(v));
-  if (isNaN(n) || n < MIN_STAKE || n > MAX_STAKE) return false;
-  state.stake = n; state.stakeInput = String(n);
-  stakeError('');
-  updateStakeDisplay(); updateBetslip();
-  return true;
-}
-function stakeError(msg) { $('#stakeError').textContent = msg; }
-function updateStakeDisplay() {
-  const d = state.stakeInput || '0';
-  $('#stakeInputValue').textContent = `$${d}`;
-  $$('.stake-preset').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.amount) === parseFloat(d)));
-}
-function handleNumpadKey(key) {
-  Sfx.play('tick');
-  if (key === 'confirm') {
-    if (setStake(state.stakeInput)) { $('#stakePanel').classList.remove('open'); return; }
-    stakeError(`Enter a stake from ${money(MIN_STAKE)} to ${money(MAX_STAKE)}.`);
-    shake($('#stakeInputValue'));
-    return;
-  }
-  stakeError('');
-  if (key === 'backspace') { state.stakeInput = state.stakeInput.slice(0, -1); updateStakeDisplay(); return; }
-  if (key === '.' && state.stakeInput.includes('.')) return;
-  if (/\.\d\d$/.test(state.stakeInput)) return; // cents only
-  if (state.stakeInput.length >= 8) return;
-  state.stakeInput += key === '.' && !state.stakeInput ? '0.' : key;
-  updateStakeDisplay();
-}
-function adjustStake(delta) { setStake(Math.max(1, (parseFloat(state.stakeInput) || 0) + delta)); Sfx.play('tick'); }
-
+let lastSlipDesk = null;
 function positionBetslip() {
-  if (isDesktop()) { $('#betslip').style.bottom = ''; return; } // docked in the bets column
-  const offset = window.innerHeight - $('#mainContent').getBoundingClientRect().bottom;
-  $('#betslip').style.bottom = offset > 4 ? `${Math.round(offset)}px` : '';
+  const slip = $('#betslip'), main = $('#mainContent');
+  // switching layout (resize, rotation) puts the slip in that layout's state
+  const desk = isDesktop();
+  if (desk !== lastSlipDesk) { lastSlipDesk = desk; state.slipOpen = false; applySlip(); }
+  if (desk) { slip.style.bottom = ''; return; } // docked in the bets column
+  const offset = window.innerHeight - main.getBoundingClientRect().bottom;
+  slip.style.bottom = offset > 4 ? `${Math.round(offset)}px` : '';
+  // the markets scroll clear of the collapsed sheet (bar + foot)
+  main.style.setProperty('--slip-h', `${$('#slipBar').offsetHeight + $('.slip-foot').offsetHeight}px`);
 }
 
 // ===== SETTINGS =====
@@ -1081,10 +1154,46 @@ function bindEvents() {
   $('#btnHome').addEventListener('click', () => { if (!state.isPlaying && !state.autoplay.active) { newRandomMatchup(); Sfx.play('swap'); } });
   $$('.lg-tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
 
-  $('#betslipSummary').addEventListener('click', () => { $('#betslip').classList.toggle('expanded'); Sfx.play('tick'); });
+  // Betslip
+  $('#slipBar').addEventListener('click', toggleSlip);
+  $('#slipScrim').addEventListener('click', () => setSlipOpen(false));
+  $$('.stake-chip').forEach(c => c.addEventListener('click', () => { if (!state.isPlaying) setAllStakes(+c.dataset.amount); }));
+  $('#stakeCustom').addEventListener('change', (e) => {
+    const v = readStake(e.target.value);
+    e.target.value = '';
+    if (v != null && !state.isPlaying) setAllStakes(v);
+  });
+  $('#slipClear').addEventListener('click', () => {
+    state.bets = [];
+    Sfx.play('deselect');
+    syncSelections();
+    updateBetslip();
+  });
+  const tickets = $('#betslipBets');
+  tickets.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]');
+    const bet = b && state.bets[+b.dataset.i];
+    if (!bet || state.isPlaying) return;
+    if (b.dataset.act === 'rm') {
+      state.bets.splice(+b.dataset.i, 1);
+      Sfx.play('deselect');
+      syncSelections();
+      updateBetslip();
+      return;
+    }
+    const v = stepStake(bet.stake, b.dataset.act === 'inc' ? 1 : -1);
+    if (v != null) { bet.stake = v; Sfx.play('tick'); updateBetslip(); }
+  });
+  tickets.addEventListener('change', (e) => {
+    const bet = e.target.matches('input[data-act="stake"]') && state.bets[+e.target.dataset.i];
+    if (!bet || state.isPlaying) return;
+    const v = readStake(e.target.value);
+    if (v != null) bet.stake = v;
+    updateBetslip();
+  });
+  $('#betslip').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('input')) e.target.blur(); });
   $('#btnPlay').addEventListener('click', playGame);
-  $('#btnAuto').addEventListener('click', () => { if (!state.isPlaying) { updateAutoplayDisplay(); $('#autoplayOverlay').classList.add('visible'); Sfx.play('tick'); } });
-  $('#btnStake').addEventListener('click', () => { state.stakeInput = String(state.stake); stakeError(''); updateStakeDisplay(); $('#stakePanel').classList.add('open'); Sfx.play('tick'); });
+  $('#btnAuto').addEventListener('click', () => { if (!state.isPlaying) { setSlipOpen(false); updateAutoplayDisplay(); $('#autoplayOverlay').classList.add('visible'); Sfx.play('tick'); } });
 
   $('#autoplayClose').addEventListener('click', () => $('#autoplayOverlay').classList.remove('visible'));
   $('#autoplayOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('visible'); });
@@ -1098,12 +1207,6 @@ function bindEvents() {
   $('#autoplaySkip').addEventListener('change', (e) => { state.autoplay.skipResults = e.target.checked; });
   $('#autoplayActivate').addEventListener('click', activateAutoplay);
   $('#autoChipStop').addEventListener('click', () => { stopAutoplay(); Sfx.play('deselect'); });
-
-  $('#stakePanelClose').addEventListener('click', () => $('#stakePanel').classList.remove('open'));
-  $('#stakeMinus').addEventListener('click', () => adjustStake(-1));
-  $('#stakePlus').addEventListener('click', () => adjustStake(1));
-  $$('.stake-preset').forEach(b => b.addEventListener('click', () => { setStake(parseFloat(b.dataset.amount)); Sfx.play('tick'); }));
-  $$('.numpad-key').forEach(b => b.addEventListener('click', () => handleNumpadKey(b.dataset.key)));
 
   $('#btnSkipIngame').addEventListener('click', skipIngame);
 
@@ -1134,7 +1237,7 @@ function bindEvents() {
     $('#resultOverlay').classList.remove('visible');
     ResultFx.stop();
     setTimeout(() => {
-      $('#btnPlay').innerHTML = PLAY_BTN_HTML;
+      setPlayLabel('Place bet');
       newRandomMatchup();
     }, 250);
   });
@@ -1142,7 +1245,7 @@ function bindEvents() {
   $('#btnRebet').addEventListener('click', () => {
     if (state.autoplay.active) stopAutoplay();
     $('#resultOverlay').classList.remove('visible');
-    $('#btnPlay').innerHTML = PLAY_BTN_HTML;
+    setPlayLabel('Place bet');
     state.isPlaying = false;
     resetViews();
     syncSelections();
@@ -1154,6 +1257,6 @@ function bindEvents() {
     closeSelector(); closeOverlay('#historyOverlay'); closeOverlay('#mathsOverlay'); toggleSettings(false);
     $('#helpOverlay').classList.remove('visible');
     $('#autoplayOverlay').classList.remove('visible');
-    $('#stakePanel').classList.remove('open');
+    setSlipOpen(false);
   });
 }

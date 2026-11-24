@@ -1,23 +1,49 @@
 // ===== BETSLIP =====
+// Layout and stake system from Instant Racing, drawn with the Legends
+// components (condensed uppercase labels, card buttons, the teal selected
+// state of the odds buttons). On phones it is a bottom sheet: the bar (count,
+// total) and the foot (max return, Auto, Place bet) stay up; tapping the bar
+// slides the panel open. The tickets scroll at the top of the panel and the
+// "Stake per bet" chips sit at its bottom, just above the foot. On desktop the
+// slip docks at the bottom of the bets column, always open (_layout.scss).
+// Every bet carries its own stake: the chips set all of them, each ticket's
+// − / + steps its own (stepStake() in game.js).
+
+// Dims the page while the phone sheet is open
+.slip-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: rgba(3, 7, 16, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease, visibility 0s linear 0.24s;
+  @include hidden-until('.visible');
+
+  &.visible { opacity: 1; pointer-events: auto; }
+}
+
 .betslip {
   position: fixed;
   bottom: 0;
   left: 50%;
-  right: auto;
-  background:
-    radial-gradient(ellipse 90% 65% at 0% 0%, rgba($win-green, 0.12) 0%, transparent 58%),
-    linear-gradient(145deg, rgba($win-green, 0.06) 0%, transparent 45%),
-    $bg-panel;
-  border-top: 1px solid $border-subtle;
   z-index: 200;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: $max-width;
-  transform: translateX(-50%) translateY(100%);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: $bg-panel;
+  border: 1px solid $border-light;
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -16px 40px -12px rgba(0, 0, 0, 0.75);
+  transform: translateX(-50%) translateY(105%);
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.3s $ease-bounce, opacity 0.2s ease, visibility 0s linear 0.3s;
+  transition: transform 0.4s $ease-out-expo, opacity 0.2s ease, visibility 0s linear 0.4s;
   @include hidden-until('.visible');
 
   &.visible {
@@ -25,319 +51,344 @@
     opacity: 1;
     pointer-events: all;
   }
-
-  &.expanded {
-    .betslip-toggle { transform: rotate(180deg); }
-    .betslip-detail {
-      max-height: 300px;
-      overflow-y: auto;
-      visibility: visible;
-      transition-delay: 0s;
-    }
-  }
-
-  &-summary {
-    display: grid;
-    grid-template-columns: 1fr 32px;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 28px 10px 16px; // 28px right = betslip-bets (16) + bet-item (12) — lines up remove column
-    cursor: pointer;
-  }
-
-  &-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    @include condensed(0.75rem, 600, 0.8px);
-    color: $text-muted;
-    flex-wrap: wrap;
-
-    > span:first-child {
-      color: $text-white;
-      letter-spacing: 1.5px;
-    }
-  }
-
-  &-maxpay strong { color: $win-green; }
-
-  &-toggle {
-    background: none;
-    color: $text-muted;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: transform 0.3s;
-
-    svg {
-      width: 20px;
-      height: 20px;
-      display: block;
-    }
-  }
-
-  &-detail {
-    max-height: 0;
-    overflow: hidden;
-    visibility: hidden;
-    transition: max-height 0.3s ease, visibility 0s linear 0.3s;
-  }
-
-  &-bets {
-    padding: 0 16px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  &-actions {
-    display: flex;
-    gap: 8px;
-    padding: 10px 16px max(12px, env(safe-area-inset-bottom));
-  }
 }
 
-// Bet items
-.bet-item {
+// ---------- bar ----------
+.slip-bar {
+  display: block;
+  width: 100%;
+  padding: 6px 14px 2px;
+  text-align: left;
+  color: $text-white;
+  -webkit-tap-highlight-color: transparent;
+}
+.slip-grip {
+  display: block;
+  width: 32px;
+  height: 4px;
+  margin: 0 auto 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.slip-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+
+  > b { @include condensed(0.9rem, 700, 1.5px); text-transform: uppercase; }
+}
+.slip-count {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: $accent-light;
+  color: $bg-primary;
+  @include condensed(0.75rem, 800, 0);
+  font-variant-numeric: tabular-nums;
+
+  &.pop { animation: lgCountPop 0.35s $ease-overshoot; }
+}
+.slip-cost {
+  margin-left: auto;
+  @include condensed(0.8rem, 600, 0.8px);
+  text-transform: uppercase;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+
+  b { @include condensed(0.95rem, 700, 0.3px); color: $text-white; margin-left: 2px; }
+}
+.slip-chev {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: $text-muted;
+  transition: transform 0.3s $ease-out-expo;
+  .betslip.open & { transform: rotate(180deg); }
+}
+
+// ---------- panel: tickets, Clear all, stake chips ----------
+// grid-template-rows 0fr -> 1fr animates to the content's height; the inner
+// box caps it, and only the ticket list scrolls.
+.slip-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 0.4s $ease-out-expo, visibility 0s linear 0.4s;
+
+  .betslip.open & {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+}
+.slip-panel-inner {
+  min-height: 0;
+  max-height: 62dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tickets {
+  list-style: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 12px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.ticket {
+  flex: none;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 10px;
+  align-items: center;
+  padding: 8px 6px 8px 12px;
+  @include card-bg;
+  border-radius: $radius-lg;
+}
+.ticket-type {
+  grid-column: 1;
+  @include condensed(0.72rem, 700, 1.2px);
+  text-transform: uppercase;
+  color: $accent-light;
+}
+.ticket-sel {
+  grid-column: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @include condensed(0.92rem, 700, 0.5px);
+  color: $text-white;
+}
+.ticket-odds {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
+  padding-right: 34px;
+  @include condensed(1.05rem, 600, 0.5px);
+  font-variant-numeric: tabular-nums;
+}
+.ticket-foot {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  @include card-bg;
+  gap: 10px;
+  margin-top: 5px;
+  padding-right: 6px;
+  @include condensed(0.78rem, 600, 0.8px);
+  text-transform: uppercase;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
 
-  &-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  &-market {
-    @include condensed(0.75rem, 600, 1px);
-    color: $text-dim;
-    text-transform: uppercase;
-  }
-
-  &-selection {
-    @include condensed(0.85rem, 700, 0.5px);
-  }
-
-  &-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  &-odds {
-    @include condensed(1.05rem, 500);
-  }
-
-  &-pay {
-    @include condensed(0.84rem, 600, 0.3px);
-    color: $win-green;
-  }
-
-  &-remove {
-    background: none;
-    color: $text-faint;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    line-height: 1;
-    padding: 0;
-    border-radius: $radius-sm;
-    transition: color 0.2s;
-
-    &:hover { color: $accent-red; }
-  }
+  b { @include condensed(0.88rem, 700, 0.3px); color: $win-green; }
 }
-
-// ===== STAKE PANEL =====
-.stake-panel {
-  max-height: 0;
-  overflow: hidden;
-  background: $bg-stake;
-  transition: max-height 0.35s $ease-bounce, visibility 0s linear 0.35s;
-  @include hidden-until('.open');
-
-  &.open { max-height: 340px; }
-
-  &-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px 8px;
-  }
-
-  &-label {
-    @include condensed(0.8rem, 700, 1px);
-    color: $text-muted;
-  }
-
-  &-close {
-    @include flex-center;
-    width: 32px;
-    height: 32px;
-    background: none;
-    color: $text-muted;
-    transition: color 0.15s;
-
-    &:hover { color: $text-white; }
-  }
-}
-
-.stake-input-group {
+.ticket-stake { display: flex; align-items: center; gap: 8px; }
+// − stake + in one pill; the middle still takes a typed amount
+.ticket-stepper {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: $radius-lg;
-  overflow: hidden;
-}
+  height: 32px;
+  border-radius: $radius-md;
+  border: 1px solid $border-light;
+  background: $bg-btn;
 
-.stake-adjust {
-  @include flex-center;
+  &:focus-within { border-color: $accent-light; }
+
+  input {
+    width: 54px;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: $text-white;
+    text-align: center;
+    @include condensed(0.92rem, 700, 0.3px);
+    font-variant-numeric: tabular-nums;
+
+    &:focus, &:focus-visible { outline: none; }
+  }
+}
+.ticket-step {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 100%;
+  border-radius: $radius-md - 1px;
+  color: $text-muted;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+
+  svg { width: 14px; height: 14px; }
+  &:hover { background: $bg-btn-hover; color: $text-white; }
+  &:active { transform: scale(0.9); }
+  &:disabled { opacity: 0.35; cursor: default; background: none; transform: none; color: $text-muted; }
+}
+.ticket-rm {
+  position: absolute;
+  top: 2px;
+  right: 0;
   width: 36px;
   height: 36px;
-  background: $bg-btn-hover;
-  color: $text-muted;
-  transition: background 0.15s, color 0.15s;
-
-  &:hover {
-    background: $border-hover;
-    color: $text-white;
-  }
-}
-
-.stake-input-value {
-  min-width: 60px;
-  text-align: center;
-  @include condensed(1rem, 700);
-  color: $text-white;
-  padding: 0 8px;
-}
-
-.stake-error {
-  padding: 0 16px 4px;
-  font-size: 0.8rem;
-  color: $accent-red;
-  text-align: center;
-
-  &:empty { display: none; }
-}
-
-.stake-presets {
-  display: flex;
-  gap: 6px;
-  padding: 6px 16px 10px;
-}
-
-.stake-preset {
-  flex: 1;
-  padding: 8px 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: $text-muted;
-  @include condensed(0.85rem, 700);
-  border-radius: $radius-md;
-  transition: background 0.15s, color 0.15s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: $text-white;
-  }
-
-  &.active {
-    background: rgba($accent, 0.15);
-    border: 1px solid $accent;
-    color: $accent-light;
-  }
-}
-
-.stake-numpad {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  padding: 0 16px 12px;
-}
-
-.numpad-key {
-  padding: 12px 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: $text-white;
-  @include condensed(1rem, 600);
+  place-items: center;
   border-radius: $radius-md;
-  @include flex-center;
-  transition: background 0.15s;
+  color: $text-faint;
+  transition: color 0.15s;
 
-  &:hover { background: rgba(255, 255, 255, 0.1); }
-  &:active { background: $bg-btn-active; }
+  svg { width: 16px; height: 16px; }
+  &:hover { color: $accent-red; }
 }
 
-.numpad-wide {
-  grid-column: span 2;
+.slip-clear {
+  align-self: center;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  @include condensed(0.78rem, 700, 1.2px);
+  text-transform: uppercase;
+  color: $text-faint;
+  transition: color 0.15s;
+
+  svg { width: 14px; height: 14px; }
+  &:hover { color: $accent-red; }
 }
 
-.numpad-confirm {
-  background: $bg-btn-hover;
-  color: $accent-gold;
+// Chips sit at the bottom of the panel, next to the foot
+.slip-stake {
+  flex-shrink: 0;
+  padding: 8px 12px 4px;
+  border-top: 1px solid $border-subtle;
+}
+.slip-stake-label {
+  display: block;
+  margin-bottom: 6px;
+  @include label-style;
+  font-weight: 700;
+}
+.stake-chips {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 1.35fr);
+  gap: 4px;
+}
+.stake-chip,
+.stake-custom {
+  min-width: 0;
+  height: 34px;
+  @include card-bg;
+  color: $text-white;
+  @include condensed(0.92rem, 700, 0.3px);
+  font-variant-numeric: tabular-nums;
+}
+.stake-chip {
+  padding: 0 2px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
 
-  &:hover { background: $border-hover; }
+  &:hover { @include card-hover; }
+  &:active { transform: scale(0.95); }
+  &.active { @include selected-state; color: $accent-light; }
+}
+.stake-custom {
+  width: 100%;
+  padding: 0 4px;
+  text-align: center;
+
+  &::placeholder { color: $text-muted; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.78rem; }
+  &:focus { border-color: $accent-light; outline: none; }
 }
 
-// ===== ACTION BUTTONS =====
-.btn-auto,
-.btn-stake {
+// ---------- foot: max return, Auto, Place bet ----------
+.slip-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 10px 14px;
+}
+.slip-ret {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.slip-ret-label {
+  @include condensed(0.72rem, 700, 1.5px);
+  text-transform: uppercase;
+  color: $text-muted;
+}
+.slip-ret-value {
+  @include condensed(1.65rem, 800, 0.5px);
+  line-height: 1.05;
+  color: #ffd27a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.pop { animation: lgRetPop 0.35s $ease-out-expo; }
+}
+@keyframes lgRetPop {
+  from { transform: translateY(-6px); opacity: 0.4; }
+  to   { transform: none; opacity: 1; }
+}
+.slip-btns { display: flex; gap: 8px; flex-shrink: 0; }
+
+.btn-auto {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
-  min-width: 64px;
+  gap: 2px;
+  width: 56px;
+  height: 48px;
+  border-radius: $radius-lg;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid $border-light;
   color: $text-white;
-  @include condensed(0.75rem, 700, 1.2px);
-  border-radius: $radius-lg;
+  @include condensed(0.72rem, 700, 1.2px);
   text-transform: uppercase;
   transition: background 0.15s;
-  line-height: 1.2;
 
+  svg { width: 18px; height: 18px; }
   &:hover { background: $bg-btn-hover; }
-
-  span {
-    @include condensed(0.75rem, 600, 0.5px);
-    color: $text-muted;
-    margin-top: 1px;
-  }
 }
 
 .btn-play {
-  flex: 1;
-  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 48px;
+  min-width: 140px;
+  padding: 0 18px;
+  border-radius: $radius-lg;
   background: linear-gradient(135deg, $win-green, $win-green-dark);
   color: $bg-primary;
-  @include condensed(1.1rem, 800, 2px);
-  border-radius: $radius-lg;
-  text-transform: uppercase;
   transition: opacity 0.2s, transform 0.1s;
 
   &:hover { opacity: 0.92; }
   &:active { transform: scale(0.98); }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    transform: none;
-  }
+  &:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 }
+.btn-play-label { @include condensed(1.05rem, 800, 2px); text-transform: uppercase; line-height: 1; }
+.btn-play-amt { @include condensed(0.78rem, 700, 0.5px); line-height: 1; opacity: 0.8; font-variant-numeric: tabular-nums; }
 
+// Smallest phones: a narrower Place bet keeps the max return readable
+@media (max-width: 360px) {
+  .btn-play { min-width: 118px; padding: 0 12px; }
+  .slip-ret-value { font-size: 1.45rem; }
+}

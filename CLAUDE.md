@@ -13,11 +13,17 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 - `<main>` has two columns: `#stageCol` (viewer, in-game matchbar, face-off, selector) and `#betsCol` (markets, live bets, result overlay, betslip).
   - `setView('idle' | 'ingame' | 'result')` in `game.js` puts one `view-*` class on `<main>`. All showing and hiding happens in `scss/_layout.scss`.
   - **Mobile (< 1024px):** one screen at a time, as before.
-  - **Desktop (≥ 1024px):**
+  - **Desktop (â‰¥ 1024px):**
     - Before Play, the left column is only the versus panel: big players, swapping and the "Choose your matchup" heading. The viewer is collapsed.
-    - On Play, `#viewerReveal` opens (`grid-template-rows` 0fr → 1fr) and the panel scales down below it via the animatable `--stage-h` custom property. The reverse happens on New Matchup or Re-bet.
+    - On Play, `#viewerReveal` opens (`grid-template-rows` 0fr â†’ 1fr) and the panel scales down below it via the animatable `--stage-h` custom property. The reverse happens on New Matchup or Re-bet.
     - On the right are the markets, then the live bets, then the result, with the betslip docked at the bottom of the column.
-- `scss/_backdrop.scss` draws the frosted-ice background with rink markings behind the framed layouts (≥ 480px).
+- **Betslip** (`#betslip`, `scss/_betslip.scss`): the layout and stake system from Instant Racing (`../iRacing`).
+  - Every bet carries its own `stake`. The "Stake per bet" chips ($1â€“$50, `STAKE_CHIPS`) and the Other field set all of them, and `state.stake` is the stake for new bets. Each ticket's âˆ’ / + walks the chips (`stepStake()`), and its middle takes a typed amount, clamped to `MIN_STAKE`â€“`MAX_STAKE`.
+  - The foot shows Max return (the best single outcome, `maxPayout()`), Auto and Place bet with the slip cost.
+  - Phones: a bottom sheet. The bar (count, total) and foot stay up; tapping the bar opens the panel over a scrim (`setSlipOpen()`). `--slip-h` pads the markets clear of it.
+  - Open, the tickets scroll at the top of the panel and the "Stake per bet" chips sit at its bottom, just above the foot.
+  - Desktop: docked at the bottom of the bets column, expanded by default. The bar collapses and expands it there too, and a collapse is remembered for the session (`legends_slip_open` in `sessionStorage`). With no bets only the bar and the foot show.
+- `scss/_backdrop.scss` draws the frosted-ice background with rink markings behind the framed layouts (â‰¥ 480px).
 - Player figures come in three helpers: `playerHTML` (full cut-out), `miniHTML` (small full body with name and role beneath, used in the matchbar, result bar and banner) and `avatarHTML` (head crop, history only).
 - The outcome card shows the deciding player as their trading card instead (`cardSrc()` in `data.js`, `.lgo-card`): the shooter on the left for goals and misses, the goalie on the right for saves.
 - `public/js/`, in load order:
@@ -46,7 +52,7 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 
 ## Shot presentation
 - The shot is video only, and every clip has commentary. The intro sting plays over the shooter's clip (`assets/clips/<file>.mp4`).
-  - Clips come from `LegendShootout_MP4/`: 640×360, 5.5–7.2s from the first word of the call, stereo AAC at -18 LUFS.
+  - Clips come from `LegendShootout_MP4/`: 640Ã—360, 5.5â€“7.2s from the first word of the call, stereo AAC at -18 LUFS.
   - Only Messier, Yzerman, Clarke, Savard and Sundin have their own clip. The other shooters borrow the clip whose kit looks closest (`BORROW` in `clip.js`).
   - Clips play with sound when the sound toggle is on, and fall back to muted if autoplay with sound is refused. The clip's own arena sound carries the build-up (there is no synthesised crowd bed).
   - The old silent clips (`Video clips/`) are no longer used.
@@ -65,11 +71,11 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 
 ## Dev hooks
 - **Settings menu** (gear, next to sound): switches results between **Correct maths** (drawn from the priced odds) and **Forced results**.
-  - In forced mode, rounds alternate goal, save, goal…, starting with a goal whenever the mode is switched on. Within each, the shot type and area (or the save type) is drawn from the priced odds, renormalised. Misses never come up.
+  - In forced mode, rounds alternate goal, save, goalâ€¦, starting with a goal whenever the mode is switched on. Within each, the shot type and area (or the save type) is drawn from the priced odds, renormalised. Misses never come up.
   - Wins still pay the normal odds, so it is a demo mode only and must be removed or disabled before certification.
   - The mode persists in `localStorage` (`legends_results_mode`), the alternation in `sessionStorage` (`legends_forced_next`). `drawRoundOutcome()` in `game.js` applies it; `pricing.js` is untouched.
   - A gold dot on the gear shows forced mode is on.
-- `?dev` shows the **Pricing model** panel (Σ in the header), where RTP and the log5 baseline can be changed live. Without the flag the button is hidden and unbound. Strip it before certification.
+- `?dev` shows the **Pricing model** panel (Î£ in the header), where RTP and the log5 baseline can be changed live. Without the flag the button is hidden and unbound. Strip it before certification.
 - `?force=<outcome key>` overrides both modes and forces every draw, to review animations. Keys: `FTL FTR FBL FBR FFH BTL BTR BBL BBR BFH` for goals, `NG NB NP NS NM` for saves and misses. It is dev-only, so strip it or disable it before certification.
 
 ## Deploy

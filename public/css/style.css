@@ -141,7 +141,7 @@ input:focus-visible {
   display: none;
 }
 .main-content.has-bets {
-  padding-bottom: 140px;
+  padding-bottom: calc(var(--slip-h, 128px) + 16px);
 }
 @media (min-height: 800px) {
   .main-content {
@@ -164,7 +164,7 @@ input:focus-visible {
     overflow-y: auto;
   }
   .betslip {
-    border-radius: 0 0 10px 10px;
+    border-radius: 20px 20px 10px 10px;
   }
 }
 .match-header {
@@ -375,22 +375,46 @@ input:focus-visible {
   color: #ffffff;
 }
 
+.slip-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: rgba(3, 7, 16, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease, visibility 0s linear 0.24s;
+  visibility: hidden;
+}
+.slip-scrim.visible {
+  visibility: visible;
+  transition-delay: 0s;
+}
+.slip-scrim.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .betslip {
   position: fixed;
   bottom: 0;
   left: 50%;
-  right: auto;
-  background: radial-gradient(ellipse 90% 65% at 0% 0%, rgba(34, 197, 94, 0.12) 0%, transparent 58%), linear-gradient(145deg, rgba(34, 197, 94, 0.06) 0%, transparent 45%), #0d1528;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 200;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 420px;
-  transform: translateX(-50%) translateY(100%);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #0d1528;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -16px 40px -12px rgba(0, 0, 0, 0.75);
+  transform: translateX(-50%) translateY(105%);
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease, visibility 0s linear 0.3s;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, visibility 0s linear 0.4s;
   visibility: hidden;
 }
 .betslip.visible {
@@ -402,343 +426,469 @@ input:focus-visible {
   opacity: 1;
   pointer-events: all;
 }
-.betslip.expanded .betslip-toggle {
+
+.slip-bar {
+  display: block;
+  width: 100%;
+  padding: 6px 14px 2px;
+  text-align: left;
+  color: #ffffff;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.slip-grip {
+  display: block;
+  width: 32px;
+  height: 4px;
+  margin: 0 auto 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.slip-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+.slip-top > b {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.slip-count {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #80e8df;
+  color: #0a1120;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.slip-count.pop {
+  animation: lgCountPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.slip-cost {
+  margin-left: auto;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #b4c6d9;
+  font-variant-numeric: tabular-nums;
+}
+.slip-cost b {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+  margin-left: 2px;
+}
+
+.slip-chev {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #b4c6d9;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.betslip.open .slip-chev {
   transform: rotate(180deg);
 }
-.betslip.expanded .betslip-detail {
-  max-height: 300px;
-  overflow-y: auto;
+
+.slip-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.4s;
+}
+.betslip.open .slip-panel {
+  grid-template-rows: 1fr;
   visibility: visible;
   transition-delay: 0s;
 }
-.betslip-summary {
-  display: grid;
-  grid-template-columns: 1fr 32px;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 28px 10px 16px;
-  cursor: pointer;
-}
-.betslip-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  color: #b4c6d9;
-  flex-wrap: wrap;
-}
-.betslip-info > span:first-child {
-  color: #ffffff;
-  letter-spacing: 1.5px;
-}
-.betslip-maxpay strong {
-  color: #22c55e;
-}
-.betslip-toggle {
-  background: none;
-  color: #b4c6d9;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: transform 0.3s;
-}
-.betslip-toggle svg {
-  width: 20px;
-  height: 20px;
-  display: block;
-}
-.betslip-detail {
-  max-height: 0;
+
+.slip-panel-inner {
+  min-height: 0;
+  max-height: 62dvh;
   overflow: hidden;
-  visibility: hidden;
-  transition: max-height 0.3s ease, visibility 0s linear 0.3s;
-}
-.betslip-bets {
-  padding: 0 16px 6px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-.betslip-actions {
-  display: flex;
-  gap: 8px;
-  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
 }
 
-.bet-item {
+.tickets {
+  list-style: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 12px 2px;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.ticket {
+  flex: none;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 10px;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
+  padding: 8px 6px 8px 12px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
-}
-.bet-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.bet-item-market {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: #a6bbd0;
-  text-transform: uppercase;
-}
-.bet-item-selection {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.bet-item-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.bet-item-odds {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-.bet-item-pay {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.84rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  color: #22c55e;
-}
-.bet-item-remove {
-  background: none;
-  color: #9fb4ca;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  line-height: 1;
-  padding: 0;
-  border-radius: 4px;
-  transition: color 0.2s;
-}
-.bet-item-remove:hover {
-  color: #ff6b6b;
-}
-
-.stake-panel {
-  max-height: 0;
-  overflow: hidden;
-  background: #1a2236;
-  transition: max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.35s;
-  visibility: hidden;
-}
-.stake-panel.open {
-  visibility: visible;
-  transition-delay: 0s;
-}
-.stake-panel.open {
-  max-height: 340px;
-}
-.stake-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px 8px;
-}
-.stake-panel-label {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #b4c6d9;
-}
-.stake-panel-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: none;
-  color: #b4c6d9;
-  transition: color 0.15s;
-}
-.stake-panel-close:hover {
-  color: #ffffff;
-}
-
-.stake-input-group {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  overflow: hidden;
 }
 
-.stake-adjust {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #b4c6d9;
-  transition: background 0.15s, color 0.15s;
-}
-.stake-adjust:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-
-.stake-input-value {
-  min-width: 60px;
-  text-align: center;
+.ticket-type {
+  grid-column: 1;
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 1rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-  padding: 0 8px;
-}
-
-.stake-error {
-  padding: 0 16px 4px;
-  font-size: 0.8rem;
-  color: #ff6b6b;
-  text-align: center;
-}
-.stake-error:empty {
-  display: none;
-}
-
-.stake-presets {
-  display: flex;
-  gap: 6px;
-  padding: 6px 16px 10px;
-}
-
-.stake-preset {
-  flex: 1;
-  padding: 8px 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #b4c6d9;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  border-radius: 6px;
-  transition: background 0.15s, color 0.15s;
-}
-.stake-preset:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-.stake-preset.active {
-  background: rgba(128, 157, 187, 0.15);
-  border: 1px solid #809DBB;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
   color: #80e8df;
 }
 
-.stake-numpad {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  padding: 0 16px 12px;
+.ticket-sel {
+  grid-column: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
-.numpad-key {
-  padding: 12px 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+.ticket-odds {
+  grid-column: 2;
+  grid-row: 1/span 2;
+  justify-self: end;
+  padding-right: 34px;
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-foot {
+  grid-column: 1/-1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 5px;
+  padding-right: 6px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #b4c6d9;
+  font-variant-numeric: tabular-nums;
 }
-.numpad-key:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-.numpad-key:active {
-  background: rgba(255, 255, 255, 0.15);
+.ticket-foot b {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #22c55e;
 }
 
-.numpad-wide {
-  grid-column: span 2;
+.ticket-stake {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.numpad-confirm {
+.ticket-stepper {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+.ticket-stepper:focus-within {
+  border-color: #80e8df;
+}
+.ticket-stepper input {
+  width: 54px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffffff;
+  text-align: center;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+}
+.ticket-stepper input:focus, .ticket-stepper input:focus-visible {
+  outline: none;
+}
+
+.ticket-step {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 100%;
+  border-radius: 5px;
+  color: #b4c6d9;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.ticket-step svg {
+  width: 14px;
+  height: 14px;
+}
+.ticket-step:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #f5a623;
+  color: #ffffff;
 }
-.numpad-confirm:hover {
-  background: rgba(255, 255, 255, 0.12);
+.ticket-step:active {
+  transform: scale(0.9);
+}
+.ticket-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: none;
+  transform: none;
+  color: #b4c6d9;
 }
 
-.btn-auto,
-.btn-stake {
+.ticket-rm {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #9fb4ca;
+  transition: color 0.15s;
+}
+.ticket-rm svg {
+  width: 16px;
+  height: 16px;
+}
+.ticket-rm:hover {
+  color: #ff6b6b;
+}
+
+.slip-clear {
+  align-self: center;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #9fb4ca;
+  transition: color 0.15s;
+}
+.slip-clear svg {
+  width: 14px;
+  height: 14px;
+}
+.slip-clear:hover {
+  color: #ff6b6b;
+}
+
+.slip-stake {
+  flex-shrink: 0;
+  padding: 8px 12px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.slip-stake-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #d3dbe4;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.stake-chips {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 1.35fr);
+  gap: 4px;
+}
+
+.stake-chip,
+.stake-custom {
+  min-width: 0;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stake-chip {
+  padding: 0 2px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+.stake-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.stake-chip:active {
+  transform: scale(0.95);
+}
+.stake-chip.active {
+  background: rgba(128, 157, 187, 0.15);
+  border-color: #80e8df;
+  color: #80e8df;
+}
+
+.stake-custom {
+  width: 100%;
+  padding: 0 4px;
+  text-align: center;
+}
+.stake-custom::placeholder {
+  color: #b4c6d9;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 0.78rem;
+}
+.stake-custom:focus {
+  border-color: #80e8df;
+  outline: none;
+}
+
+.slip-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 10px 14px;
+}
+
+.slip-ret {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.slip-ret-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #b4c6d9;
+}
+
+.slip-ret-value {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1.05;
+  color: #ffd27a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.slip-ret-value.pop {
+  animation: lgRetPop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lgRetPop {
+  from {
+    transform: translateY(-6px);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.slip-btns {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-auto {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
-  min-width: 64px;
+  gap: 2px;
+  width: 56px;
+  height: 48px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #ffffff;
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 1.2px;
-  border-radius: 8px;
   text-transform: uppercase;
   transition: background 0.15s;
-  line-height: 1.2;
 }
-.btn-auto:hover,
-.btn-stake:hover {
+.btn-auto svg {
+  width: 18px;
+  height: 18px;
+}
+.btn-auto:hover {
   background: rgba(255, 255, 255, 0.08);
-}
-.btn-auto span,
-.btn-stake span {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  color: #b4c6d9;
-  margin-top: 1px;
 }
 
 .btn-play {
-  flex: 1;
-  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 48px;
+  min-width: 140px;
+  padding: 0 18px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #0a1120;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 2px;
-  border-radius: 8px;
-  text-transform: uppercase;
   transition: opacity 0.2s, transform 0.1s;
 }
 .btn-play:hover {
@@ -753,6 +903,34 @@ input:focus-visible {
   transform: none;
 }
 
+.btn-play-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.btn-play-amt {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 360px) {
+  .btn-play {
+    min-width: 118px;
+    padding: 0 12px;
+  }
+  .slip-ret-value {
+    font-size: 1.45rem;
+  }
+}
 .autoplay-overlay {
   position: fixed;
   inset: 0;
@@ -4714,10 +4892,12 @@ html {
   .main-content.view-ingame .lg-selector,
   .main-content.view-ingame .markets-section,
   .main-content.view-ingame .betslip,
+  .main-content.view-ingame .slip-scrim,
   .main-content.view-result .lg-faceoff,
   .main-content.view-result .lg-selector,
   .main-content.view-result .markets-section,
-  .main-content.view-result .betslip {
+  .main-content.view-result .betslip,
+  .main-content.view-result .slip-scrim {
     display: none;
   }
 }
@@ -5006,13 +5186,50 @@ html {
     bottom: auto !important;
     width: 100%;
     max-width: none;
+    padding-bottom: 0;
     transform: none;
     opacity: 1;
     visibility: visible;
     pointer-events: all;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0 0 14px 0;
     flex-shrink: 0;
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    transition: none;
+  }
+  .slip-bar {
+    padding: 10px 14px 4px;
+  }
+  .slip-bar:hover .slip-chev {
+    color: #ffffff;
+  }
+  .slip-grip,
+  .slip-scrim {
+    display: none;
+  }
+  .slip-panel-inner {
+    max-height: min(32vh, 300px);
+  }
+  .slip-foot {
+    padding: 8px 12px 12px 14px;
+  }
+  .slip-ret-value {
+    font-size: clamp(1.4rem, 2.1vw, 1.75rem);
+  }
+  .btn-play {
+    min-width: 124px;
+    padding: 0 14px;
+  }
+  .betslip.is-empty .slip-stake,
+  .betslip.is-empty .tickets,
+  .betslip.is-empty .slip-clear,
+  .betslip.is-empty .slip-cost,
+  .betslip.is-empty .slip-chev {
+    display: none;
+  }
+  .betslip.is-empty .slip-bar {
+    cursor: default;
   }
   .lg-auto-chip {
     left: calc((100% - clamp(340px, 27vw, 392px)) / 2);

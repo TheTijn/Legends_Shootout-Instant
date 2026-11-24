@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a1120">
   <title>Legends Shootout</title>
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=18">
+  <link rel="stylesheet" href="css/style.css?v=21">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -56,7 +56,7 @@
             <button type="button" role="radio" data-mode="forced" aria-checked="false">Forced results</button>
           </div>
           <p class="lg-settings-note" data-for="maths">Every shot is drawn from the priced odds.</p>
-          <p class="lg-settings-note" data-for="forced">Rounds alternate goal, save, goal… Shot type, target and save type still vary. Demo only: wins pay the normal odds.</p>
+          <p class="lg-settings-note" data-for="forced">Rounds alternate goal, save, goalâ€¦ Shot type, target and save type still vary. Demo only: wins pay the normal odds.</p>
         </div>
       </div>
       <button class="icon-btn lg-sound-btn" id="btnSound" title="Sound" aria-label="Turn sound on" aria-pressed="false">
@@ -75,7 +75,7 @@
   <!-- AUTO PLAY STATUS -->
   <div class="lg-auto-chip" id="autoChip" aria-live="polite">
     <span class="lg-auto-dot"></span>
-    <span>Auto play · <b id="autoChipLeft">0</b> left</span>
+    <span>Auto play Â· <b id="autoChipLeft">0</b> left</span>
     <button type="button" id="autoChipStop">Stop</button>
   </div>
 
@@ -304,70 +304,46 @@
     </div>
 
 
-    <!-- BETSLIP -->
-    <div class="betslip" id="betslip">
-      <div class="betslip-summary" id="betslipSummary">
-        <div class="betslip-info">
-          <span>BETSLIP</span>
-          <span class="betslip-count" id="betCount">0 BETS</span>
-          <span class="betslip-stake" id="betTotalStake">$0 TOTAL STAKE</span>
-          <span class="betslip-maxpay">MAX PAY: <strong id="betMaxPay">$0</strong></span>
-        </div>
-        <button type="button" class="betslip-toggle" id="betslipToggle" aria-label="Expand betslip">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
-        </button>
-      </div>
-      <div class="betslip-detail" id="betslipDetail">
-        <div class="betslip-bets" id="betslipBets"></div>
-      </div>
-      <div class="stake-panel" id="stakePanel">
-        <div class="stake-panel-header">
-          <span class="stake-panel-label">DEFAULT STAKE:</span>
-          <div class="stake-input-group">
-            <button class="stake-adjust" id="stakeMinus" aria-label="Lower stake">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <span class="stake-input-value" id="stakeInputValue">$1</span>
-            <button class="stake-adjust" id="stakePlus" aria-label="Raise stake">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
+    <!-- BETSLIP (layout and stake system from Instant Racing; game.js + scss/_betslip.scss) -->
+    <div class="betslip is-empty" id="betslip" role="region" aria-label="Betslip">
+      <button type="button" class="slip-bar" id="slipBar" aria-expanded="false" aria-controls="slipPanel">
+        <span class="slip-grip" aria-hidden="true"></span>
+        <span class="slip-top">
+          <b>Betslip</b><span class="slip-count" id="betCount">0</span>
+          <span class="slip-cost">Total <b id="betTotal">$0.00</b></span>
+          <svg class="slip-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        </span>
+      </button>
+      <div class="slip-panel" id="slipPanel">
+        <div class="slip-panel-inner">
+          <ul class="tickets" id="betslipBets"></ul>
+          <button type="button" class="slip-clear" id="slipClear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Clear all</button>
+          <div class="slip-stake">
+            <span class="slip-stake-label" id="stakeChipsLabel">Stake per bet</span>
+            <div class="stake-chips" role="group" aria-labelledby="stakeChipsLabel">
+              <button type="button" class="stake-chip" data-amount="1">$1</button>
+              <button type="button" class="stake-chip" data-amount="2">$2</button>
+              <button type="button" class="stake-chip" data-amount="5">$5</button>
+              <button type="button" class="stake-chip" data-amount="10">$10</button>
+              <button type="button" class="stake-chip" data-amount="25">$25</button>
+              <button type="button" class="stake-chip" data-amount="50">$50</button>
+              <input type="text" class="stake-custom" id="stakeCustom" inputmode="decimal" autocomplete="off" placeholder="Other" aria-label="Other stake for every bet">
+            </div>
           </div>
-          <button class="stake-panel-close" id="stakePanelClose" aria-label="Close stake">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <p class="stake-error" id="stakeError" role="alert"></p>
-        <div class="stake-presets">
-          <button class="stake-preset active" data-amount="1">$1</button>
-          <button class="stake-preset" data-amount="5">$5</button>
-          <button class="stake-preset" data-amount="10">$10</button>
-          <button class="stake-preset" data-amount="20">$20</button>
-          <button class="stake-preset" data-amount="50">$50</button>
-        </div>
-        <div class="stake-numpad">
-          <button class="numpad-key" data-key="1">1</button>
-          <button class="numpad-key" data-key="2">2</button>
-          <button class="numpad-key" data-key="3">3</button>
-          <button class="numpad-key" data-key="4">4</button>
-          <button class="numpad-key" data-key="5">5</button>
-          <button class="numpad-key" data-key="6">6</button>
-          <button class="numpad-key" data-key="7">7</button>
-          <button class="numpad-key" data-key="8">8</button>
-          <button class="numpad-key" data-key="9">9</button>
-          <button class="numpad-key" data-key=".">.</button>
-          <button class="numpad-key" data-key="0">0</button>
-          <button class="numpad-key numpad-wide" data-key="backspace" aria-label="Delete">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
-          </button>
-          <button class="numpad-key numpad-wide numpad-confirm" data-key="confirm" aria-label="Confirm stake">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-          </button>
         </div>
       </div>
-      <div class="betslip-actions">
-        <button class="btn-auto" id="btnAuto">AUTO</button>
-        <button class="btn-stake" id="btnStake">STAKE<span id="stakeDisplay">$1</span></button>
-        <button class="btn-play" id="btnPlay">PLAY <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+      <div class="slip-foot">
+        <div class="slip-ret">
+          <span class="slip-ret-label">Max return</span>
+          <span class="slip-ret-value" id="betMaxPay">$0.00</span>
+        </div>
+        <div class="slip-btns">
+          <button type="button" class="btn-auto" id="btnAuto" aria-label="Auto play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 14.5 15"/><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="2" x2="12" y2="5"/></svg><span>Auto</span></button>
+          <button type="button" class="btn-play" id="btnPlay" disabled>
+            <span class="btn-play-label">Place bet</span>
+            <span class="btn-play-amt" id="btnPlayAmt">$0.00</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -390,8 +366,8 @@
         <h3 class="help-sub-title">Playing the game</h3>
         <ol class="help-list">
           <li>Choose a shooter and a goalie, or shuffle for a random matchup.</li>
-          <li>Make your bet selections.</li>
-          <li>Press Play and watch the shot.</li>
+          <li>Make your bet selections. Set the stake for every bet with the chips on the betslip, or for one bet with its âˆ’ and + buttons.</li>
+          <li>Press Place bet and watch the shot.</li>
           <li>Pick a new matchup or re-bet the same one.</li>
         </ol>
 
@@ -460,7 +436,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="autoplay-stake">Stake: $ <strong id="autoplayStakeVal">1</strong> x</div>
+      <div class="autoplay-stake">Stake per bet: <strong id="autoplayStakeVal">$1.00</strong></div>
       <div class="autoplay-section">
         <div class="autoplay-section-label">Number of Rounds</div>
         <div class="autoplay-rounds">
@@ -511,6 +487,9 @@
     </div>
   </div>
 
+  <!-- Dims the page while the phone betslip is open -->
+  <div class="slip-scrim" id="slipScrim" aria-hidden="true"></div>
+
   <!-- TOAST (limits, balance) -->
   <div class="lg-toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -521,6 +500,6 @@
   <script src="js/outcome.js?v=5"></script>
   <script src="js/clip.js?v=13"></script>
   <script src="js/fx.js?v=11"></script>
-  <script src="js/game.js?v=19"></script>
+  <script src="js/game.js?v=21"></script>
 </body>
 </html>
