@@ -6,24 +6,24 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 - `npm start`: compiles SCSS, then serves `public/` on http://localhost:3001 (iHockey uses 3000).
 - `npm run dev`: SCSS watch plus server auto-restart.
 - `npm run images`: regenerates the player art from `Players_Series_01*/` and the trading cards from `PLAYERS_CARDS/` (needs ImageMagick and cwebp). `npm run images -- cards` rebuilds the cards only.
-- `npm run clips [-- <slug> ...]`: re-encodes `public/assets/clips/` from `LegendShootout_MP4/` using the cut points in `scripts/clips.txt` (needs ffmpeg). Pass slugs to rebuild only those clips.
+- `npm run clips [-- <slug> ...]`: re-encodes `public/assets/clips/` from `LegendShootout_MP4/` using the cut points in `scripts/clips.txt` (needs ffmpeg): the cut `<slug>.mp4` and the full-length `<slug>-full.mp4`. Pass slugs to rebuild only those clips.
 
 ## Layout
 - `public/index.html` holds all markup. Overlays are toggled with `.visible` / `.active` classes, as in iHockey.
 - `<main>` has two columns: `#stageCol` (viewer, in-game matchbar, face-off, selector) and `#betsCol` (markets, live bets, result overlay, betslip).
   - `setView('idle' | 'ingame' | 'result')` in `game.js` puts one `view-*` class on `<main>`. All showing and hiding happens in `scss/_layout.scss`.
   - **Mobile (< 1024px):** one screen at a time, as before.
-  - **Desktop (â‰¥ 1024px):**
+  - **Desktop (≥ 1024px):**
     - Before Play, the left column is only the versus panel: big players, swapping and the "Choose your matchup" heading. The viewer is collapsed.
-    - On Play, `#viewerReveal` opens (`grid-template-rows` 0fr â†’ 1fr) and the panel scales down below it via the animatable `--stage-h` custom property. The reverse happens on New Matchup or Re-bet.
+    - On Play, `#viewerReveal` opens (`grid-template-rows` 0fr → 1fr) and the panel scales down below it via the animatable `--stage-h` custom property. The reverse happens on New Matchup or Re-bet.
     - On the right are the markets, then the live bets, then the result, with the betslip docked at the bottom of the column.
 - **Betslip** (`#betslip`, `scss/_betslip.scss`): the layout and stake system from Instant Racing (`../iRacing`).
-  - Every bet carries its own `stake`. The "Stake per bet" chips ($1â€“$50, `STAKE_CHIPS`) and the Other field set all of them, and `state.stake` is the stake for new bets. Each ticket's âˆ’ / + walks the chips (`stepStake()`), and its middle takes a typed amount, clamped to `MIN_STAKE`â€“`MAX_STAKE`.
+  - Every bet carries its own `stake`. The "Stake per bet" chips ($1–$50, `STAKE_CHIPS`) and the Other field set all of them, and `state.stake` is the stake for new bets. Each ticket's − / + walks the chips (`stepStake()`), and its middle takes a typed amount, clamped to `MIN_STAKE`–`MAX_STAKE`.
   - The foot shows Max return (the best single outcome, `maxPayout()`), Auto and Place bet with the slip cost.
   - Phones: a bottom sheet. The bar (count, total) and foot stay up; tapping the bar opens the panel over a scrim (`setSlipOpen()`). `--slip-h` pads the markets clear of it.
   - Open, the tickets scroll at the top of the panel and the "Stake per bet" chips sit at its bottom, just above the foot.
   - Desktop: docked at the bottom of the bets column, expanded by default. The bar collapses and expands it there too, and a collapse is remembered for the session (`legends_slip_open` in `sessionStorage`). With no bets only the bar and the foot show.
-- `scss/_backdrop.scss` draws the frosted-ice background with rink markings behind the framed layouts (â‰¥ 480px).
+- `scss/_backdrop.scss` draws the frosted-ice background with rink markings behind the framed layouts (≥ 480px).
 - Player figures come in three helpers: `playerHTML` (full cut-out), `miniHTML` (small full body with name and role beneath, used in the matchbar, result bar and banner) and `avatarHTML` (head crop, history only).
 - The outcome card shows the deciding player as their trading card instead (`cardSrc()` in `data.js`, `.lgo-card`): the shooter on the left for goals and misses, the goalie on the right for saves.
 - `public/js/`, in load order:
@@ -52,7 +52,7 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
 
 ## Shot presentation
 - The shot is video only, and every clip has commentary. The intro sting plays over the shooter's clip (`assets/clips/<file>.mp4`).
-  - Clips come from `LegendShootout_MP4/`: 640Ã—360, 5.5â€“7.2s from the first word of the call, stereo AAC at -18 LUFS.
+  - Clips come from `LegendShootout_MP4/`: 640×360, 5.5–7.2s from the first word of the call, stereo AAC at -18 LUFS.
   - Only Messier, Yzerman, Clarke, Savard and Sundin have their own clip. The other shooters borrow the clip whose kit looks closest (`BORROW` in `clip.js`).
   - Clips play with sound when the sound toggle is on, and fall back to muted if autoplay with sound is refused. The clip's own arena sound carries the build-up (there is no synthesised crowd bed).
   - The old silent clips (`Video clips/`) are no longer used.
@@ -62,20 +62,27 @@ Instant penalty-shot betting game (NHL Alumni shooter vs goalie). Structure mirr
   - **Miss:** the same goal with the puck going wide or over, or ringing off the post or crossbar with sparks (`variant: 'post'`).
   - **Save:** SAVE! with the goalie and the save type.
   - Outcome sounds are timed to the puck landing (`Outcome.IMPACT_MS`). The result screen follows after `REVEAL_HOLD`.
-- Each clip is cut in `scripts/clips.txt` just before the deke or release, so the footage never shows the result and the drawn outcome can't be contradicted.
+- **Real results (prototype):** each clip is tagged with the outcome its full source really shows (last column of `clips.txt`, `LIBRARY` in `clip.js`): Messier `FTL`, Yzerman `BBR`, Clarke `NM` (wide), Savard and Sundin `NP`.
+  - In **Video** results mode (the default, see Dev hooks) the video dictates the result: `ShotClip.pick()` chooses a clip at random, never the same one twice in a row, and its tagged outcome settles the bets.
+  - In the other modes the outcome is drawn first. `drawRoundOutcome()` then looks for footage of it (`ShotClip.match()`, which prefers the shooter's own or borrowed kit). Either way it returns `{ outcome, clip }`, and the clip is stored as `round.clip`.
+  - With a match, the full 12s clip (`<slug>-full.mp4`) plays through the finish, the commentator's call and the aftermath, then the outcome card follows as usual. A miss with footage keeps the footage's variant (no random post).
+  - Without a match, the cut clip plays and the card shows the drawn result, as below.
+  - The full set of renders (every outcome, per shooter) is planned: they only need rows in `clips.txt` and `LIBRARY`. Goal areas come from the producer's file codes (`glo` = goal left top, `grb` = goal right bottom) and the commentary; they have not been checked frame by frame.
+- Each cut clip stops in `scripts/clips.txt` just before the deke or release, so the footage never shows the result and the drawn outcome can't be contradicted.
   - The sources are goals, saves and misses, and the commentator calls the shot type and the result ("on the backhand", "shoots it wide"). Each cut also sits in the silent gap before the first such word; the safe last words are listed in `clips.txt`.
   - The commentary never names a player, so a borrowed clip never names the wrong one.
 - Each clip shows the goalie it was recorded against (listed in `clips.txt`), not the goalie the player picked.
-- If a clip can't start within 2.5s, the outcome card runs over its poster frame. If it stalls, the reveal happens at the clip's duration plus 3s.
+- If a clip can't start within 2.5s, the outcome card runs over its poster frame. If it stalls, the reveal happens 3s after the clip should have ended (its real duration once the metadata loads, 12s for a full clip before that).
 - All round timing is timer-driven, so a round still settles in a background tab.
 
 ## Dev hooks
-- **Settings menu** (gear, next to sound): switches results between **Correct maths** (drawn from the priced odds) and **Forced results**.
-  - In forced mode, rounds alternate goal, save, goalâ€¦, starting with a goal whenever the mode is switched on. Within each, the shot type and area (or the save type) is drawn from the priced odds, renormalised. Misses never come up.
+- **Settings menu** (gear, next to sound): switches results between **Video** (the default), **Maths** (correct maths, drawn from the priced odds) and **Forced**.
+  - In video mode every round plays a full clip and the clip's real result settles the bets (see Real results above). With five clips that is 2 goals, 1 miss and 2 saves in every 5 rounds, whatever the matchup. Wins pay the priced odds, so it is prototype only and must be removed or disabled before certification.
+  - In forced mode, rounds alternate goal, save, goal…, starting with a goal whenever the mode is switched on. Within each, the shot type and area (or the save type) is drawn from the priced odds, renormalised, from the outcomes with real footage: the shooter's own kit first, then any clip, then all outcomes if none has footage. So every forced round currently plays a full clip. Misses never come up.
   - Wins still pay the normal odds, so it is a demo mode only and must be removed or disabled before certification.
-  - The mode persists in `localStorage` (`legends_results_mode`), the alternation in `sessionStorage` (`legends_forced_next`). `drawRoundOutcome()` in `game.js` applies it; `pricing.js` is untouched.
+  - The mode persists in `localStorage` (`legends_results_mode`; no stored value means video), the alternation in `sessionStorage` (`legends_forced_next`). `drawRoundOutcome()` in `game.js` applies it; `pricing.js` is untouched.
   - A gold dot on the gear shows forced mode is on.
-- `?dev` shows the **Pricing model** panel (Î£ in the header), where RTP and the log5 baseline can be changed live. Without the flag the button is hidden and unbound. Strip it before certification.
+- `?dev` shows the **Pricing model** panel (Σ in the header), where RTP and the log5 baseline can be changed live. Without the flag the button is hidden and unbound. Strip it before certification.
 - `?force=<outcome key>` overrides both modes and forces every draw, to review animations. Keys: `FTL FTR FBL FBR FFH BTL BTR BBL BBR BFH` for goals, `NG NB NP NS NM` for saves and misses. It is dev-only, so strip it or disable it before certification.
 
 ## Deploy

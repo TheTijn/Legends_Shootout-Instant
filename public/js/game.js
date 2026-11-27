@@ -59,13 +59,18 @@ const FORCED = new URLSearchParams(location.search).get('force');
 // Without it the button stays hidden and unbound, so players can't reprice the book.
 const DEV = new URLSearchParams(location.search).has('dev');
 
-// Results mode (Settings menu): 'maths' draws every shot from the priced
-// distribution; 'forced' is a demo mode where rounds alternate goal / save.
-// The mode persists per browser, the alternation per session.
+// Results mode (Settings menu): 'video' (the prototype default) plays a real
+// clip in full and its result settles the round; 'maths' draws every shot from
+// the priced distribution; 'forced' is a demo mode where rounds alternate
+// goal / save. The mode persists per browser, the alternation per session.
 const MODE_KEY = 'legends_results_mode';
 const FORCED_NEXT_KEY = 'legends_forced_next';
-let resultsMode = 'maths';
-try { if (localStorage.getItem(MODE_KEY) === 'forced') resultsMode = 'forced'; } catch (e) { /* storage blocked */ }
+const RESULTS_MODES = ['video', 'maths', 'forced'];
+let resultsMode = 'video';
+try {
+  const saved = localStorage.getItem(MODE_KEY);
+  if (RESULTS_MODES.includes(saved)) resultsMode = saved;
+} catch (e) { /* storage blocked */ }
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -541,22 +546,37 @@ function popSlip() {
 const setPlayLabel = (text) => { $('#btnPlay .btn-play-label').textContent = text; };
 
 // ===== ROUND =====
+// Returns { outcome, clip }: clip is footage that really shows the outcome
+// (played in full) or null (the cut clip plays and the card shows the result).
 function drawRoundOutcome() {
+  const outcomeFor = (key) => state.priced.outcomes.find(x => x.key === key);
+  const withFootage = (outcome) => ({ outcome, clip: ShotClip.match(shooter(), outcome.key) });
   if (FORCED) {
-    const o = state.priced.outcomes.find(x => x.key === FORCED.toUpperCase());
-    if (o) return o;
+    const o = outcomeFor(FORCED.toUpperCase());
+    if (o) return withFootage(o);
   }
-  if (resultsMode === 'forced') return drawAlternating();
-  return drawOutcome(state.priced.outcomes);
+  if (resultsMode === 'video') {
+    // Prototype: the video dictates the result. Wins still pay the priced odds.
+    const clip = ShotClip.pick();
+    const o = clip && outcomeFor(clip.outcome);
+    if (o) return { outcome: o, clip };
+  }
+  if (resultsMode === 'forced') return withFootage(drawAlternating());
+  return withFootage(drawOutcome(state.priced.outcomes));
 }
 
 // Forced results: goal, save, goal, ... The goal (shot type + area) or the save
 // type is still drawn from the priced odds, renormalised, so rounds vary.
 // Misses are left out: a forced no-goal is always a save.
+// Outcomes with real footage come first (the shooter's own kit, then any clip),
+// so the demo shows the real finish whenever a clip has one.
 function drawAlternating() {
   const goal = store.get(FORCED_NEXT_KEY, 'goal') !== 'save';
   store.set(FORCED_NEXT_KEY, goal ? 'save' : 'goal');
-  const pool = state.priced.outcomes.filter(o => (goal ? o.goal : !o.goal && o.save !== 'M'));
+  const side = state.priced.outcomes.filter(o => (goal ? o.goal : !o.goal && o.save !== 'M'));
+  const footage = ShotClip.footageKeys(shooter());
+  const withKeys = (keys) => side.filter(o => keys.includes(o.key) && o.p > 0);
+  const pool = [withKeys(footage.kit), withKeys(footage.any), side].find(p => p.length);
   const total = pool.reduce((sum, o) => sum + o.p, 0);
   return drawOutcome(pool.map(o => ({ ...o, p: o.p / total })));
 }
@@ -571,13 +591,14 @@ function startRound() {
   closeSelector();
   setSlipOpen(false);
 
-  const outcome = drawRoundOutcome();
+  const { outcome, clip } = drawRoundOutcome();
   const results = evaluateBets(outcome);
   state.round = {
     id: `${1000000 + randInt(9000000)}`,
     outcome, results, cost, variant: null,
     payout: results.reduce((sum, r) => sum + r.payout, 0),
     shooter: shooter(), goalie: goalie(), credited: false,
+    clip, // footage that really shows this outcome, if any: it plays in full
   };
   return state.round;
 }
@@ -647,8 +668,9 @@ function showInGame(round) {
   Outcome.prepare(s, g);
 
   // The intro plays over the start of the clip. When the clip ends (just
-  // before the puck reaches the net) the frame freezes and the drawn outcome
-  // is stamped over it. If the clip can't play, the same reveal runs over the
+  // before the puck reaches the net, or after the real finish when the round
+  // has matching footage) the frame freezes and the drawn outcome is stamped
+  // over it. If the clip can't play, the same reveal runs over the
   // poster once the intro is done.
   let introDone = false, revealed = false, pending = false;
   const freezeAndReveal = () => {
@@ -666,6 +688,7 @@ function showInGame(round) {
 
   // The clip's commentary and arena sound carry the build-up
   ShotClip.play(s, {
+    clip: round.clip,
     onEnd: freezeAndReveal,
     onFail: () => { if (introDone) freezeAndReveal(); else pending = true; },
   });
@@ -694,8 +717,9 @@ function playOutcomeSound(o, variant) {
 
 function revealOutcome(round, { silent = false } = {}) {
   if (round !== state.round || round.credited) return;
-  // half of all misses ring off the iron (cosmetic only)
-  round.variant = round.outcome.save === 'M' && Math.random() < 0.5 ? 'post' : null;
+  // half of all misses ring off the iron (cosmetic only), unless the footage showed it
+  if (round.clip) round.variant = round.clip.variant === 'post' ? 'post' : null;
+  else round.variant = round.outcome.save === 'M' && Math.random() < 0.5 ? 'post' : null;
   const d = describeOutcome(round.outcome, round.shooter, round.goalie, round.variant);
   Outcome.show({ outcome: round.outcome, variant: round.variant, d, shooter: round.shooter, goalie: round.goalie });
   if (!silent) {

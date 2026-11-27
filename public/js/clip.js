@@ -7,9 +7,17 @@
 // Five shooters have their own clip; the others borrow the one whose kit looks
 // closest (BORROW). The clips show the goalie they were recorded against, not
 // the picked one.
+// Prototype of the real-result flow: each clip is tagged with the outcome its
+// full source really shows (LIBRARY). When the round's drawn outcome matches
+// one, that clip plays in full (<slug>-full.mp4) through the real finish; any
+// other outcome plays the cut and the outcome card shows the drawn result.
+// The outcome always comes from the RNG; the footage is picked to fit it.
 //
-// ShotClip.prepare(shooter) · ShotClip.play(shooter, { onEnd, onFail })
-// ShotClip.stop() · ShotClip.syncSound()
+// In Video results mode (the prototype default) it works the other way round:
+// pick() chooses a clip and its real outcome settles the round.
+//
+// ShotClip.prepare(shooter) · ShotClip.pick() · ShotClip.match(shooter, key) · ShotClip.footageKeys(shooter)
+// ShotClip.play(shooter, { clip, onEnd, onFail }) · ShotClip.stop() · ShotClip.syncSound()
 
 const ShotClip = (() => {
   const CLIP_PATH = 'assets/clips/';
@@ -30,10 +38,46 @@ const ShotClip = (() => {
     Mark_Recchi: 'Denis_Savard',         // red, navy
     Brett_Hull: 'Mats_Sundin',           // white, blue
   };
-  let video = null, timers = [], onVisible = null;
+  // What each full source really shows (pricing.js outcome keys, shooter's view).
+  // Mirrors the last column of scripts/clips.txt. variant feeds the outcome card
+  // (a miss that went wide must not be drawn ringing off the post).
+  const LIBRARY = [
+    { slug: 'Mark_Messier',  outcome: 'FTL' },
+    { slug: 'Steve_Yzerman', outcome: 'BBR' },
+    { slug: 'Bobby_Clarke',  outcome: 'NM', variant: 'wide' },
+    { slug: 'Denis_Savard',  outcome: 'NP' },
+    { slug: 'Mats_Sundin',   outcome: 'NP' },
+  ];
+  const FULL_LENGTH = 12;     // s, every full source; used until the metadata loads
+  let video = null, timers = [], stallTimer = null, onVisible = null;
 
   const el = () => video || (video = document.getElementById('shotVideo'));
-  const srcFor = (p) => `${CLIP_PATH}${BORROW[p.file] || p.file}.mp4`;
+  const kitOf = (p) => BORROW[p.file] || p.file;
+  const srcFor = (p) => `${CLIP_PATH}${kitOf(p)}.mp4`;
+  const fullSrc = (clip) => `${CLIP_PATH}${clip.slug}-full.mp4`;
+
+  // Video results: any clip at random, never the same one twice in a row
+  let lastPick = null;
+  function pick() {
+    const pool = LIBRARY.length > 1 ? LIBRARY.filter(c => c !== lastPick) : LIBRARY;
+    lastPick = pool[Math.floor(Math.random() * pool.length)];
+    return lastPick;
+  }
+
+  // Footage of this outcome, preferring the shooter's own (or borrowed) kit
+  function match(shooter, key) {
+    const hits = LIBRARY.filter(c => c.outcome === key);
+    if (!hits.length) return null;
+    return hits.find(c => c.slug === kitOf(shooter)) || hits[Math.floor(Math.random() * hits.length)];
+  }
+
+  // Outcome keys with real footage: those in the shooter's kit, and all of them
+  function footageKeys(shooter) {
+    return {
+      kit: LIBRARY.filter(c => c.slug === kitOf(shooter)).map(c => c.outcome),
+      any: [...new Set(LIBRARY.map(c => c.outcome))],
+    };
+  }
   let voiced = false;   // a clip is playing (heard when sound is on)
 
   // Mute/unmute the playing clip to match the sound toggle
@@ -44,6 +88,7 @@ const ShotClip = (() => {
 
   function clearTimers() {
     timers.forEach(clearTimeout); timers = [];
+    clearTimeout(stallTimer); stallTimer = null;
     if (onVisible) { document.removeEventListener('visibilitychange', onVisible); onVisible = null; }
   }
 
@@ -62,20 +107,33 @@ const ShotClip = (() => {
     }
   }
 
-  function play(shooter, { onEnd, onFail }) {
+  function play(shooter, { clip = null, onEnd, onFail }) {
     const v = el();
     stop();
     prepare(shooter);
+    if (clip) {
+      // Swap to the full clip (its poster is the same first frame)
+      v.setAttribute('src', fullSrc(clip));
+      v.load();
+    }
     let done = false;
     const finish = (ok) => {
       if (done) return;
       done = true;
       clearTimers();
-      v.onended = v.onerror = null;
+      v.onended = v.onerror = v.onloadedmetadata = null;
       (ok ? onEnd : onFail)();
     };
     v.onended = () => finish(true);
     v.onerror = () => finish(false);
+    // If it stalls mid-way, reveal anyway: 3s after the clip should have ended.
+    // Re-armed once the real duration is known (a new src starts without one).
+    const armStall = () => {
+      clearTimeout(stallTimer);
+      const len = isFinite(v.duration) && v.duration > 0 ? v.duration : (clip ? FULL_LENGTH : 7.2);
+      stallTimer = setTimeout(() => finish(true), (len - v.currentTime + 3) * 1000);
+    };
+    v.onloadedmetadata = () => { if (!done) armStall(); };
     // Browsers pause muted video in background tabs; pick up where it left off
     onVisible = () => { if (!document.hidden && !done && v.paused) v.play().catch(() => {}); };
     document.addEventListener('visibilitychange', onVisible);
@@ -94,19 +152,18 @@ const ShotClip = (() => {
       });
     }
     timers.push(setTimeout(() => { if (v.currentTime < 0.05) finish(false); }, START_GUARD));
-    // If it stalls mid-way, reveal anyway
-    timers.push(setTimeout(() => finish(true), ((v.duration || 7.2) + 3) * 1000));
+    armStall();
   }
 
   function stop() {
     clearTimers();
     const v = el();
     if (!v) return;
-    v.onended = v.onerror = null;
+    v.onended = v.onerror = v.onloadedmetadata = null;
     if (!v.paused) v.pause();
     voiced = false;
     v.muted = true;
   }
 
-  return { prepare, play, stop, syncSound };
+  return { prepare, pick, match, footageKeys, play, stop, syncSound };
 })();

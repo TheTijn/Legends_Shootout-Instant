@@ -146,21 +146,10 @@
   border-bottom: 0;
   border-radius: 6px 6px 0 0;
   background: radial-gradient(ellipse 80% 90% at 50% 100%, #15233d 0%, #0d1628 100%);
+  // Posts and crossbar only: the bottom stays open, like a real goal mouth.
   box-shadow:
-    0 3px 0 -1px rgba(200, 16, 46, 0.8),
     inset 0 0 30px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
-
-  // Ice lip under the crossbar line
-  &::after {
-    content: '';
-    position: absolute;
-    left: -14px;
-    right: -14px;
-    bottom: -4px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(200, 16, 46, 0.8) 12%, rgba(200, 16, 46, 0.8) 88%, transparent);
-  }
 }
 .lg-net-mesh {
   position: absolute;

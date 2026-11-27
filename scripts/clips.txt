@@ -1,4 +1,4 @@
-# source file (from the repo root) | shooter file slug | clip goalie | cut (s)
+# source file (from the repo root) | shooter file slug | clip goalie | cut (s) | real outcome
 # Commentary clips (LegendShootout_MP4/, named <shooter id>_<goalie id>_<take><result>).
 # Shooters without their own clip borrow one (BORROW in public/js/clip.js).
 # Kits checked against the roster: Messier Rangers blue, Yzerman Red Wings red,
@@ -11,8 +11,15 @@
 #   Clarke   "…Slows into the slot," | shoots it wide!
 #   Savard   "…eyeing up the goaltender, dangles" | in, but the goalie gets a pad on him.
 #   Sundin   "…slows up, dangles" | right in, but the goalie makes the save.
-LegendShootout_MP4/1_1001_1001glo.mp4|Mark_Messier|Dominik_Hasek|5.52
-LegendShootout_MP4/3_1005_1031grb.mp4|Steve_Yzerman|Ron_Hextall|6.56
-LegendShootout_MP4/10_1002_1001mrh.mp4|Bobby_Clarke|Ed_Belfour|6.70
-LegendShootout_MP4/11_1003_1039mrh.mp4|Denis_Savard|Grant_Fuhr|6.93
-LegendShootout_MP4/16_1002_1061mrh.mp4|Mats_Sundin|Ed_Belfour|7.19
+# Real outcome: what the full source actually shows, as a pricing.js outcome key
+# (FTL = forehand top left from the shooter's view, BBR = backhand bottom right,
+# NM = miss, NP = pad save). When the round draws that key, the full clip
+# (<slug>-full.mp4) plays through the finish instead of the cut. Goal areas come
+# from the producer's file codes (glo = goal left top, grb = goal right bottom)
+# and the commentary; Sundin's save type was read from the footage (butterfly,
+# low). Keep LIBRARY in public/js/clip.js in step with this column.
+LegendShootout_MP4/1_1001_1001glo.mp4|Mark_Messier|Dominik_Hasek|5.52|FTL
+LegendShootout_MP4/3_1005_1031grb.mp4|Steve_Yzerman|Ron_Hextall|6.56|BBR
+LegendShootout_MP4/10_1002_1001mrh.mp4|Bobby_Clarke|Ed_Belfour|6.70|NM
+LegendShootout_MP4/11_1003_1039mrh.mp4|Denis_Savard|Grant_Fuhr|6.93|NP
+LegendShootout_MP4/16_1002_1061mrh.mp4|Mats_Sundin|Ed_Belfour|7.19|NP

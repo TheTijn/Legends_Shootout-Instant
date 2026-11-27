@@ -6,6 +6,9 @@
 # commentator calls the shot. The drawn outcome is stamped over the frozen
 # last frame instead. Video stays at the native 640x360; the audio is
 # normalised to -18 LUFS and faded out over the last 60ms.
+# It also builds <Shooter>-full.mp4: the whole source, through the real finish,
+# at the same gain. The game plays it when the round draws the outcome the
+# footage really shows (the 5th column of clips.txt).
 #
 # Usage: npm run clips [-- <slug> ...]   (no slugs = every clip). Requires ffmpeg.
 set -euo pipefail
@@ -15,7 +18,7 @@ LUFS=-18
 FADE=0.06
 ONLY=" $* "
 mkdir -p "$OUT"
-grep -v '^#' scripts/clips.txt | while IFS='|' read -r file slug goalie cut; do
+grep -v '^#' scripts/clips.txt | while IFS='|' read -r file slug goalie cut outcome; do
   [ -z "$file" ] && continue
   [ "$ONLY" != "  " ] && [[ "$ONLY" != *" $slug "* ]] && continue
   gain=$(ffmpeg -nostats -t "$cut" -i "$file" -vn -af ebur128 -f null - 2>&1 | awk -v t=$LUFS '/^ +I:/{i=$2} END{printf "%.1f", t-i}')
@@ -25,6 +28,12 @@ grep -v '^#' scripts/clips.txt | while IFS='|' read -r file slug goalie cut; do
     -c:v libx264 -profile:v high -preset slow -crf 23 -maxrate 2M -bufsize 4M -g 30 \
     -af "volume=${gain}dB,afade=t=out:st=$fade:d=$FADE" -c:a aac -b:a 96k \
     -movflags +faststart "$OUT/$slug.mp4" < /dev/null
+  # Full length: the source already fades out at its end
+  ffmpeg -v error -y -i "$file" \
+    -vf "scale=640:360:flags=lanczos,format=yuv420p" \
+    -c:v libx264 -profile:v high -preset slow -crf 23 -maxrate 2M -bufsize 4M -g 30 \
+    -af "volume=${gain}dB" -c:a aac -b:a 96k \
+    -movflags +faststart "$OUT/$slug-full.mp4" < /dev/null
   ffmpeg -v error -y -i "$file" -frames:v 1 -vf "scale=640:360" -q:v 5 "$OUT/$slug.jpg" < /dev/null
-  echo "$slug  ${cut}s  ${gain}dB  $(du -k "$OUT/$slug.mp4" | cut -f1)KB"
+  echo "$slug  ${cut}s  ${gain}dB  $(du -k "$OUT/$slug.mp4" | cut -f1)KB  full ($outcome) $(du -k "$OUT/$slug-full.mp4" | cut -f1)KB"
 done

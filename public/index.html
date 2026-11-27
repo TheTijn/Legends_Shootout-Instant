@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a1120">
   <title>Legends Shootout</title>
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=22">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -52,11 +52,13 @@
         <div class="lg-settings-menu" id="settingsMenu" role="dialog" aria-label="Settings">
           <span class="lg-settings-title">Results</span>
           <div class="lg-seg" role="radiogroup" aria-label="Results">
-            <button type="button" role="radio" data-mode="maths" aria-checked="true">Correct maths</button>
-            <button type="button" role="radio" data-mode="forced" aria-checked="false">Forced results</button>
+            <button type="button" role="radio" data-mode="video" aria-checked="true">Video</button>
+            <button type="button" role="radio" data-mode="maths" aria-checked="false">Maths</button>
+            <button type="button" role="radio" data-mode="forced" aria-checked="false">Forced</button>
           </div>
-          <p class="lg-settings-note" data-for="maths">Every shot is drawn from the priced odds.</p>
-          <p class="lg-settings-note" data-for="forced">Rounds alternate goal, save, goalâ€¦ Shot type, target and save type still vary. Demo only: wins pay the normal odds.</p>
+          <p class="lg-settings-note" data-for="video">Each round plays a real shot in full, and what happens in the video settles the bets. Prototype only: wins pay the normal odds.</p>
+          <p class="lg-settings-note" data-for="maths">Every shot is drawn from the priced odds. When a clip shows the drawn result, it plays in full.</p>
+          <p class="lg-settings-note" data-for="forced">Rounds alternate goal, save, goal… Shot type, target and save type still vary. Demo only: wins pay the normal odds.</p>
         </div>
       </div>
       <button class="icon-btn lg-sound-btn" id="btnSound" title="Sound" aria-label="Turn sound on" aria-pressed="false">
@@ -75,7 +77,7 @@
   <!-- AUTO PLAY STATUS -->
   <div class="lg-auto-chip" id="autoChip" aria-live="polite">
     <span class="lg-auto-dot"></span>
-    <span>Auto play Â· <b id="autoChipLeft">0</b> left</span>
+    <span>Auto play · <b id="autoChipLeft">0</b> left</span>
     <button type="button" id="autoChipStop">Stop</button>
   </div>
 
@@ -366,7 +368,7 @@
         <h3 class="help-sub-title">Playing the game</h3>
         <ol class="help-list">
           <li>Choose a shooter and a goalie, or shuffle for a random matchup.</li>
-          <li>Make your bet selections. Set the stake for every bet with the chips on the betslip, or for one bet with its âˆ’ and + buttons.</li>
+          <li>Make your bet selections. Set the stake for every bet with the chips on the betslip, or for one bet with its − and + buttons.</li>
           <li>Press Place bet and watch the shot.</li>
           <li>Pick a new matchup or re-bet the same one.</li>
         </ol>
@@ -498,8 +500,8 @@
   <script src="js/audio.js?v=12"></script>
   <script src="js/intro.js?v=11"></script>
   <script src="js/outcome.js?v=5"></script>
-  <script src="js/clip.js?v=13"></script>
+  <script src="js/clip.js?v=15"></script>
   <script src="js/fx.js?v=11"></script>
-  <script src="js/game.js?v=21"></script>
+  <script src="js/game.js?v=23"></script>
 </body>
 </html>

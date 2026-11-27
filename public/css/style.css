@@ -3011,16 +3011,7 @@ img + .lg-avatar-initials {
   border-bottom: 0;
   border-radius: 6px 6px 0 0;
   background: radial-gradient(ellipse 80% 90% at 50% 100%, #15233d 0%, #0d1628 100%);
-  box-shadow: 0 3px 0 -1px rgba(200, 16, 46, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-.lg-net::after {
-  content: "";
-  position: absolute;
-  left: -14px;
-  right: -14px;
-  bottom: -4px;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(200, 16, 46, 0.8) 12%, rgba(200, 16, 46, 0.8) 88%, transparent);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .lg-net-mesh {
@@ -4703,7 +4694,8 @@ html {
 
 .lg-seg {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 3px;
   padding: 3px;
   border-radius: 6px;
